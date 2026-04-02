@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
 from app.models.user import User
-from app.repositories.recommendation import RecommendationRepository
+from app.repositories.recommendation import FeedbackRepository, RecommendationRepository
 from app.repositories.taste_profile import TasteProfileRepository
 from app.schemas.recommendation import (
+    FeedbackResponse,
     RecommendationFeedbackRequest,
     RecommendationGenerateRequest,
     RecommendationGenerateResponse,
@@ -55,13 +56,13 @@ def get_recommendation(
     return recommendation
 
 
-@router.post("/recommendations/{recommendation_id}/feedback", response_model=RecommendationResponse)
+@router.post("/recommendations/{recommendation_id}/feedback", response_model=FeedbackResponse)
 def submit_feedback(
     recommendation_id: UUID,
     payload: RecommendationFeedbackRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> RecommendationResponse:
+) -> FeedbackResponse:
     repository = RecommendationRepository(db)
     recommendation = repository.get_for_user(
         user_id=current_user.id,
@@ -73,12 +74,14 @@ def submit_feedback(
     service = RecommendationService(
         recommendation_repository=repository,
         taste_profile_repository=TasteProfileRepository(db),
+        feedback_repository=FeedbackRepository(db),
     )
-    updated = service.submit_feedback(
+    feedback = service.submit_feedback(
         recommendation,
-        rating=payload.rating,
+        user=current_user,
+        feedback_type=payload.feedback_type,
         notes=payload.notes,
     )
     db.commit()
-    db.refresh(updated)
-    return updated
+    db.refresh(feedback)
+    return feedback

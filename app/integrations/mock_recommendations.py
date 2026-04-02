@@ -1,30 +1,36 @@
-def build_mock_recommendations(*, destination_city: str, destination_country: str, taste_vibe: str, cuisines: list[str]) -> dict:
-    primary_cuisine = cuisines[0] if cuisines else "regional"
-    summary = (
-        f"A short-list for {destination_city}, {destination_country} tuned for a {taste_vibe.lower()} "
-        f"with a bias toward {primary_cuisine} dining."
-    )
-    items = [
-        {
-            "restaurant_name": f"{destination_city} Market Table",
-            "neighborhood": "Old Town",
-            "cuisine": primary_cuisine.title(),
-            "why_it_matches": "A polished local favorite with a focused menu and strong ingredient sourcing.",
-            "price_tier": "$$",
+from typing import Any
+
+
+def build_mock_recommendation(
+    *,
+    destination_city: str,
+    destination_country: str,
+    top_cities: list[str],
+    loved_restaurants: list[str],
+) -> dict[str, Any]:
+    return {
+        "request_context_json": {
+            "destination_city": destination_city,
+            "destination_country": destination_country,
+            "signals_used": {
+                "top_cities": top_cities,
+                "loved_restaurants": loved_restaurants,
+            },
         },
-        {
-            "restaurant_name": f"{destination_city} Night Counter",
-            "neighborhood": "River District",
-            "cuisine": "Contemporary Small Plates",
-            "why_it_matches": "Fits travelers who want energetic service and a chef-driven room without a tasting-menu format.",
+        "restaurant_json": {
+            "name": f"{destination_city} Atelier",
+            "city": destination_city,
+            "country": destination_country,
+            "cuisine": "Contemporary local",
             "price_tier": "$$$",
         },
-        {
-            "restaurant_name": f"{destination_city} Corner Grill",
-            "neighborhood": "Central Station",
-            "cuisine": "Local Comfort Food",
-            "why_it_matches": "A reliable first-night option with broad appeal and strong local signatures.",
-            "price_tier": "$$",
+        "score": 0.91,
+        "why": (
+            f"Selected for travelers heading to {destination_city} who respond well to destination-led dining "
+            f"signals and chef-driven rooms."
+        ),
+        "anchors_json": {
+            "matched_cities": top_cities,
+            "matched_seed_restaurants": loved_restaurants,
         },
-    ]
-    return {"summary": summary, "items": items}
+    }

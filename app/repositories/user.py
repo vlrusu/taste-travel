@@ -11,8 +11,8 @@ class UserRepository:
     def get_by_email(self, email: str) -> User | None:
         return self.db.scalar(select(User).where(User.email == email))
 
-    def create(self, *, email: str, full_name: str) -> User:
-        user = User(email=email, full_name=full_name, dietary_preferences=[])
+    def create(self, *, email: str | None) -> User:
+        user = User(email=email)
         self.db.add(user)
         self.db.flush()
         self.db.refresh(user)

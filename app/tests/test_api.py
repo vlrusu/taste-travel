@@ -14,25 +14,26 @@ def test_get_and_patch_me(client):
     patch_response = client.patch(
         "/api/v1/me",
         json={
-            "full_name": "Alex Nomad",
+            "email": "alex@example.com",
             "home_city": "Chicago",
-            "dietary_preferences": ["vegetarian", "shellfish-free"],
+            "onboarding_complete": True,
         },
     )
 
     assert patch_response.status_code == 200
     body = patch_response.json()
-    assert body["full_name"] == "Alex Nomad"
+    assert body["email"] == "alex@example.com"
     assert body["home_city"] == "Chicago"
-    assert body["dietary_preferences"] == ["vegetarian", "shellfish-free"]
+    assert body["onboarding_complete"] is True
 
 
 def test_seed_crud_and_taste_profile_generation(client):
     create_response = client.post(
         "/api/v1/me/seeds",
         json={
-            "title": "Tokyo ramen counters",
-            "category": "street-food",
+            "name": "Tokyo ramen counters",
+            "city": "Tokyo",
+            "sentiment": "love",
             "notes": "Late-night spots with short menus",
         },
     )
@@ -47,8 +48,8 @@ def test_seed_crud_and_taste_profile_generation(client):
     profile_response = client.post("/api/v1/me/taste-profile:generate")
     assert profile_response.status_code == 200
     profile = profile_response.json()["taste_profile"]
-    assert profile["vibe"] == "Adventurous street-food hunter"
-    assert "street-food" in profile["summary"]
+    assert profile["attributes_json"]["loved_restaurants"] == ["Tokyo ramen counters"]
+    assert "Tokyo" in profile["summary"]
 
     fetch_profile_response = client.get("/api/v1/me/taste-profile")
     assert fetch_profile_response.status_code == 200
@@ -62,8 +63,9 @@ def test_recommendation_generation_retrieval_and_feedback(client):
     client.post(
         "/api/v1/me/seeds",
         json={
-            "title": "Basque tasting rooms",
-            "category": "fine-dining",
+            "name": "Basque tasting rooms",
+            "city": "San Sebastian",
+            "sentiment": "love",
             "notes": "Menus with local seafood and low-intervention wine",
         },
     )
@@ -80,8 +82,8 @@ def test_recommendation_generation_retrieval_and_feedback(client):
     assert generate_response.status_code == 201
     recommendation = generate_response.json()["recommendation"]
     recommendation_id = recommendation["id"]
-    assert recommendation["destination_city"] == "San Sebastian"
-    assert len(recommendation["items"]) == 3
+    assert recommendation["request_context_json"]["destination_city"] == "San Sebastian"
+    assert recommendation["restaurant_json"]["city"] == "San Sebastian"
 
     get_response = client.get(f"/api/v1/recommendations/{recommendation_id}")
     assert get_response.status_code == 200
@@ -89,11 +91,11 @@ def test_recommendation_generation_retrieval_and_feedback(client):
 
     feedback_response = client.post(
         f"/api/v1/recommendations/{recommendation_id}/feedback",
-        json={"rating": 5, "notes": "Strong first-pass shortlist"},
+        json={"feedback_type": "perfect", "notes": "Strong first-pass shortlist"},
     )
 
     assert feedback_response.status_code == 200
     feedback_body = feedback_response.json()
-    assert feedback_body["feedback_rating"] == 5
-    assert feedback_body["feedback_notes"] == "Strong first-pass shortlist"
-    assert feedback_body["feedback_submitted_at"] is not None
+    assert feedback_body["feedback_type"] == "perfect"
+    assert feedback_body["notes"] == "Strong first-pass shortlist"
+    assert feedback_body["created_at"] is not None

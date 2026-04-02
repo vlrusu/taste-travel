@@ -17,31 +17,23 @@ class TasteProfileService:
 
     def generate_for_user(self, user: User) -> TasteProfile:
         seeds = self.taste_seed_repository.list_for_user(user.id)
-        titles = [seed.title for seed in seeds]
-        categories = [seed.category for seed in seeds]
-        category_counts = Counter(categories)
+        loved = [seed for seed in seeds if seed.sentiment == "love"]
+        disliked = [seed for seed in seeds if seed.sentiment == "dislike"]
+        top_cities = [city for city, _ in Counter(seed.city for seed in loved).most_common(3)]
 
-        cuisine_preferences = [name for name, _ in category_counts.most_common(3)] or ["regional"]
-        destination_preferences = titles[:3] or ["walkable food neighborhoods", "chef-led local favorites"]
-        vibe = "Curious, design-aware diner"
-        if "street-food" in category_counts:
-            vibe = "Adventurous street-food hunter"
-        elif "fine-dining" in category_counts:
-            vibe = "High-touch reservation planner"
+        summary = "User taste profile generated from saved seed restaurants."
+        if top_cities:
+            summary = f"User consistently responds well to restaurants in {', '.join(top_cities)}."
 
-        summary = (
-            f"{user.full_name} prefers {', '.join(cuisine_preferences)} experiences and is drawn to "
-            f"{', '.join(destination_preferences)}."
-        )
-        if user.home_city:
-            summary += f" Home base: {user.home_city}."
-        if user.dietary_preferences:
-            summary += f" Dietary preferences: {', '.join(user.dietary_preferences)}."
+        attributes_json = {
+            "loved_restaurants": [seed.name for seed in loved],
+            "disliked_restaurants": [seed.name for seed in disliked],
+            "top_cities": top_cities,
+            "onboarding_complete": user.onboarding_complete,
+        }
 
         return self.taste_profile_repository.upsert(
             user_id=user.id,
             summary=summary,
-            vibe=vibe,
-            cuisine_preferences=cuisine_preferences,
-            destination_preferences=destination_preferences,
+            attributes_json=attributes_json,
         )

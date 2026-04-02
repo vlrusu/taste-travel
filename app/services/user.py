@@ -11,10 +11,7 @@ class UserService:
     def get_or_create_default_user(self) -> User:
         user = self.user_repository.get_by_email(self.settings.default_user_email)
         if user is None:
-            user = self.user_repository.create(
-                email=self.settings.default_user_email,
-                full_name=self.settings.default_user_name,
-            )
+            user = self.user_repository.create(email=self.settings.default_user_email)
         return user
 
     def update_user(self, user: User, **changes: object) -> User:

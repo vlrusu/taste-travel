@@ -1,32 +1,24 @@
-from datetime import datetime
+from uuid import UUID
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from app.models.enums import FeedbackType
 from app.schemas.common import TimestampedResponse
 
 
-class RecommendationItem(BaseModel):
-    restaurant_name: str
-    neighborhood: str
-    cuisine: str
-    why_it_matches: str
-    price_tier: str
-
-
 class RecommendationResponse(TimestampedResponse):
-    destination_city: str
-    destination_country: str
-    summary: str
-    status: str
-    items: list[RecommendationItem]
-    feedback_rating: int | None
-    feedback_notes: str | None
-    feedback_submitted_at: datetime | None
+    user_id: UUID
+    request_context_json: dict[str, Any]
+    restaurant_json: dict[str, Any]
+    score: float
+    why: str
+    anchors_json: dict[str, Any]
 
 
 class RecommendationGenerateRequest(BaseModel):
-    destination_city: str = Field(..., max_length=255)
-    destination_country: str = Field(..., max_length=255)
+    destination_city: str
+    destination_country: str
 
 
 class RecommendationGenerateResponse(BaseModel):
@@ -34,5 +26,12 @@ class RecommendationGenerateResponse(BaseModel):
 
 
 class RecommendationFeedbackRequest(BaseModel):
-    rating: int = Field(..., ge=1, le=5)
+    feedback_type: FeedbackType
     notes: str | None = None
+
+
+class FeedbackResponse(TimestampedResponse):
+    recommendation_id: UUID
+    user_id: UUID
+    feedback_type: FeedbackType
+    notes: str | None

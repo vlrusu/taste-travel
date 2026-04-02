@@ -1,23 +1,25 @@
 import uuid
-from datetime import datetime
+from typing import Any
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String, Text, Uuid
+from sqlalchemy import JSON, Float, ForeignKey, Text, Uuid
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 
+jsonb_type = JSON().with_variant(postgresql.JSONB(astext_type=Text()), "postgresql")
+
+
 class Recommendation(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "recommendations"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
-    destination_city: Mapped[str] = mapped_column(String(255), nullable=False)
-    destination_country: Mapped[str] = mapped_column(String(255), nullable=False)
-    summary: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[str] = mapped_column(String(50), nullable=False, default="generated")
-    items: Mapped[list[dict]] = mapped_column(JSON, default=list, nullable=False)
-    feedback_rating: Mapped[int | None] = mapped_column(nullable=True)
-    feedback_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    feedback_submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    request_context_json: Mapped[dict[str, Any]] = mapped_column(jsonb_type, nullable=False, default=dict)
+    restaurant_json: Mapped[dict[str, Any]] = mapped_column(jsonb_type, nullable=False, default=dict)
+    score: Mapped[float] = mapped_column(Float, nullable=False)
+    why: Mapped[str] = mapped_column(Text, nullable=False)
+    anchors_json: Mapped[dict[str, Any]] = mapped_column(jsonb_type, nullable=False, default=dict)
 
     user = relationship("User", back_populates="recommendations")
+    feedback_entries = relationship("Feedback", back_populates="recommendation", cascade="all, delete-orphan")

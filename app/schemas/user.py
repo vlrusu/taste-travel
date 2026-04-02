@@ -4,13 +4,12 @@ from app.schemas.common import TimestampedResponse
 
 
 class UserResponse(TimestampedResponse):
-    email: str
-    full_name: str
+    email: str | None
     home_city: str | None
-    dietary_preferences: list[str]
+    onboarding_complete: bool
 
 
 class UserUpdateRequest(BaseModel):
-    full_name: str | None = Field(default=None, max_length=255)
+    email: str | None = Field(default=None, max_length=255)
     home_city: str | None = Field(default=None, max_length=255)
-    dietary_preferences: list[str] | None = None
+    onboarding_complete: bool | None = None

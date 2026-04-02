@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import select
@@ -18,25 +19,19 @@ class TasteProfileRepository:
         *,
         user_id: UUID,
         summary: str,
-        vibe: str,
-        cuisine_preferences: list[str],
-        destination_preferences: list[str],
+        attributes_json: dict[str, Any],
     ) -> TasteProfile:
         profile = self.get_for_user(user_id)
         if profile is None:
             profile = TasteProfile(
                 user_id=user_id,
                 summary=summary,
-                vibe=vibe,
-                cuisine_preferences=cuisine_preferences,
-                destination_preferences=destination_preferences,
+                attributes_json=attributes_json,
             )
             self.db.add(profile)
         else:
             profile.summary = summary
-            profile.vibe = vibe
-            profile.cuisine_preferences = cuisine_preferences
-            profile.destination_preferences = destination_preferences
+            profile.attributes_json = attributes_json
 
         self.db.flush()
         self.db.refresh(profile)

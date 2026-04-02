@@ -9,7 +9,7 @@ from app.repositories.taste_profile import TasteProfileRepository
 from app.repositories.taste_seed import TasteSeedRepository
 from app.repositories.user import UserRepository
 from app.schemas.taste_profile import TasteProfileGenerateResponse, TasteProfileResponse
-from app.schemas.taste_seed import TasteSeedCreateRequest, TasteSeedResponse
+from app.schemas.taste_seed import SeedRestaurantCreateRequest, SeedRestaurantResponse
 from app.schemas.user import UserResponse, UserUpdateRequest
 from app.services.taste_profile import TasteProfileService
 from app.services.user import UserService
@@ -36,7 +36,7 @@ def update_me(
     return user
 
 
-@router.get("/me/seeds", response_model=list[TasteSeedResponse])
+@router.get("/me/seeds", response_model=list[SeedRestaurantResponse])
 def list_seeds(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -45,17 +45,18 @@ def list_seeds(
     return repository.list_for_user(current_user.id)
 
 
-@router.post("/me/seeds", response_model=TasteSeedResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/me/seeds", response_model=SeedRestaurantResponse, status_code=status.HTTP_201_CREATED)
 def create_seed(
-    payload: TasteSeedCreateRequest,
+    payload: SeedRestaurantCreateRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     repository = TasteSeedRepository(db)
     seed = repository.create(
         user_id=current_user.id,
-        title=payload.title,
-        category=payload.category,
+        name=payload.name,
+        city=payload.city,
+        sentiment=payload.sentiment,
         notes=payload.notes,
     )
     db.commit()
