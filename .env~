@@ -3,15 +3,9 @@ APP_ENV=local
 APP_HOST=0.0.0.0
 APP_PORT=8000
 APP_DEBUG=true
-# Backend
 DATABASE_URL=sqlite:///./test.db
-BACKEND_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 DEFAULT_USER_EMAIL=demo@tastetravel.app
 DEFAULT_USER_NAME=Demo Traveler
 GOOGLE_PLACES_API_KEY=
 GOOGLE_PLACES_BASE_URL=https://maps.googleapis.com/maps/api/place/nearbysearch/json
-GOOGLE_GEOCODING_BASE_URL=https://maps.googleapis.com/maps/api/geocode/json
 GOOGLE_PLACES_TIMEOUT_SECONDS=8
-
-# Frontend
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1

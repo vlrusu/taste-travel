@@ -4,7 +4,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.models.enums import FeedbackType
-from app.schemas.common import TimestampedResponse
+from app.schemas.common import CreatedResponse, TimestampedResponse
 
 
 class RecommendationResponse(TimestampedResponse):
@@ -16,10 +16,24 @@ class RecommendationResponse(TimestampedResponse):
     anchors_json: dict[str, Any]
 
 
+class RecommendationLocationRequest(BaseModel):
+    city: str = Field(..., max_length=255)
+    lat: float | None = None
+    lon: float | None = None
+
+
+class RecommendationContextRequest(BaseModel):
+    meal_type: str | None = Field(default=None, max_length=100)
+    party_size: int | None = Field(default=None, ge=1)
+    budget: str | None = Field(default=None, max_length=10)
+    max_distance_meters: int | None = Field(default=None, ge=1)
+    transport_mode: str | None = Field(default=None, max_length=50)
+    special_request: str | None = Field(default=None, max_length=500)
+
+
 class RecommendationGenerateRequest(BaseModel):
-    destination_city: str = Field(..., max_length=255)
-    destination_country: str = Field(..., max_length=255)
-    dining_context: str | None = Field(default=None, max_length=500)
+    location: RecommendationLocationRequest
+    context: RecommendationContextRequest
 
 
 class RecommendationGenerateResponse(BaseModel):
@@ -31,7 +45,7 @@ class RecommendationFeedbackRequest(BaseModel):
     notes: str | None = None
 
 
-class FeedbackResponse(TimestampedResponse):
+class FeedbackResponse(CreatedResponse):
     recommendation_id: UUID
     user_id: UUID
     feedback_type: FeedbackType

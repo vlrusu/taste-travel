@@ -1,0 +1,308 @@
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+.hero {
+  margin-bottom: 28px;
+  padding: 28px;
+  border: 1px solid rgba(63, 47, 31, 0.12);
+  border-radius: 24px;
+  background: rgba(255, 252, 247, 0.86);
+  box-shadow: 0 20px 50px rgba(76, 54, 28, 0.08);
+}
+
+.hero h1 {
+  margin: 0 0 8px;
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  line-height: 1;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: #7b5f3d;
+}
+
+.subtle {
+  color: #685b4d;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.card {
+  padding: 22px;
+  border-radius: 22px;
+  border: 1px solid rgba(63, 47, 31, 0.12);
+  background: rgba(255, 252, 247, 0.92);
+  box-shadow: 0 16px 40px rgba(76, 54, 28, 0.07);
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.form label {
+  display: grid;
+  gap: 6px;
+}
+
+.form span {
+  font-size: 0.9rem;
+  color: #544534;
+}
+
+.form input,
+.form select,
+.form textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #d4c5b1;
+  background: #fffcf7;
+}
+
+.form button,
+.card > button {
+  width: fit-content;
+  min-width: 140px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #2e5d50;
+  color: #fff;
+}
+
+.form button:disabled,
+.card > button:disabled {
+  opacity: 0.6;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stack {
+  display: grid;
+  gap: 12px;
+}
+
+.inlineCard,
+.recommendationCard {
+  padding: 14px;
+  border-radius: 16px;
+  background: #fffaf2;
+  border: 1px solid rgba(63, 47, 31, 0.1);
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #efe3cf;
+  color: #5c4830;
+  font-size: 0.78rem;
+}
+
+.seedHeader {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.deleteButton {
+  min-width: 92px;
+  padding: 8px 12px;
+  border: 1px solid rgba(161, 39, 39, 0.18);
+  border-radius: 999px;
+  background: #fff;
+  color: #8d2222;
+}
+
+.deleteButton:disabled {
+  opacity: 0.6;
+}
+
+.error {
+  color: #a12727;
+}
+
+.recommendationList {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cardTop {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.restaurantName {
+  margin: 0 0 4px;
+  font-size: 1.08rem;
+}
+
+.restaurantLink {
+  color: #2c241c;
+  text-decoration: none;
+}
+
+.restaurantLink:hover {
+  text-decoration: underline;
+}
+
+.locationLine {
+  margin: 0;
+  color: #685b4d;
+}
+
+.metaGroup {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pricePill {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #e3efe9;
+  color: #214b40;
+  font-weight: 700;
+}
+
+.detailGroup {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.detailLabel {
+  margin: 0 0 6px;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6d5a46;
+}
+
+.tagList {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #f1e7d8;
+  color: #5d4a35;
+  font-size: 0.84rem;
+}
+
+.whyBlock {
+  margin-bottom: 14px;
+}
+
+.whyBlock p:last-child {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.traitGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.traitSection {
+  padding-top: 10px;
+  border-top: 1px solid rgba(63, 47, 31, 0.08);
+}
+
+.traitList {
+  margin: 0;
+  padding-left: 18px;
+  color: #3a3026;
+}
+
+.traitList li + li {
+  margin-top: 6px;
+}
+
+.score {
+  color: #2e5d50;
+  font-weight: 700;
+}
+
+.feedbackBlock {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(63, 47, 31, 0.08);
+}
+
+.feedbackActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.feedbackButton {
+  padding: 8px 12px;
+  border: 1px solid rgba(63, 47, 31, 0.12);
+  border-radius: 999px;
+  background: #fff;
+  color: #4f4132;
+  font-size: 0.84rem;
+}
+
+.feedbackButton:disabled {
+  opacity: 0.6;
+}
+
+.feedbackSaved {
+  margin: 0;
+  color: #2e5d50;
+  font-size: 0.88rem;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 18px 14px 48px;
+  }
+
+  .hero,
+  .card {
+    padding: 18px;
+  }
+
+  .row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cardTop {
+    flex-direction: column;
+  }
+
+  .metaGroup {
+    justify-content: flex-start;
+  }
+}

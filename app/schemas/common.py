@@ -12,3 +12,8 @@ class TimestampedResponse(APIModel):
     id: UUID
     created_at: datetime
     updated_at: datetime
+
+
+class CreatedResponse(APIModel):
+    id: UUID
+    created_at: datetime

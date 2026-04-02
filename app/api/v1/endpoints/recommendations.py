@@ -34,9 +34,8 @@ def generate_recommendation(
     )
     recommendations = service.generate_for_user(
         user=current_user,
-        destination_city=payload.destination_city,
-        destination_country=payload.destination_country,
-        dining_context=payload.dining_context,
+        location=payload.location,
+        context=payload.context,
     )
     db.commit()
     for recommendation in recommendations:

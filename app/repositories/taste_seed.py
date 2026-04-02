@@ -26,6 +26,14 @@ class TasteSeedRepository:
         self.db.refresh(seed)
         return seed
 
+    def get_by_user_name_city(self, *, user_id: UUID, name: str, city: str) -> SeedRestaurant | None:
+        stmt = select(SeedRestaurant).where(
+            SeedRestaurant.user_id == user_id,
+            SeedRestaurant.name == name,
+            SeedRestaurant.city == city,
+        )
+        return self.db.scalar(stmt)
+
     def get_for_user(self, *, user_id: UUID, seed_id: UUID) -> SeedRestaurant | None:
         return self.db.scalar(select(SeedRestaurant).where(SeedRestaurant.id == seed_id, SeedRestaurant.user_id == user_id))
 

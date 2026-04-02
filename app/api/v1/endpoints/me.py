@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user, get_db
@@ -10,6 +11,7 @@ from app.repositories.taste_seed import TasteSeedRepository
 from app.repositories.user import UserRepository
 from app.schemas.taste_profile import TasteProfileGenerateResponse, TasteProfileResponse
 from app.schemas.taste_seed import SeedRestaurantCreateRequest, SeedRestaurantResponse
+from app.services.seed_restaurant import DuplicateSeedRestaurantError, SeedRestaurantService
 from app.schemas.user import UserResponse, UserUpdateRequest
 from app.services.taste_profile import TasteProfileService
 from app.services.user import UserService
@@ -52,16 +54,27 @@ def create_seed(
     current_user: User = Depends(get_current_user),
 ):
     repository = TasteSeedRepository(db)
-    seed = repository.create(
-        user_id=current_user.id,
-        name=payload.name,
-        city=payload.city,
-        sentiment=payload.sentiment,
-        notes=payload.notes,
-    )
-    db.commit()
-    db.refresh(seed)
-    return seed
+    service = SeedRestaurantService(repository)
+    try:
+        seed = service.create_seed(
+            user_id=current_user.id,
+            name=payload.name,
+            city=payload.city,
+            sentiment=payload.sentiment,
+            notes=payload.notes,
+        )
+        db.commit()
+        db.refresh(seed)
+        return seed
+    except DuplicateSeedRestaurantError as error:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except IntegrityError as error:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A seed restaurant with that name and city already exists",
+        ) from error
 
 
 @router.delete("/me/seeds/{seed_id}", status_code=status.HTTP_204_NO_CONTENT)

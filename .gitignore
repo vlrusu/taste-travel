@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+frontend/.env*
+!frontend/.env.example
+.venv/
+__pycache__/
+*.pyc
+test.db
+frontend/node_modules/
+frontend/.next/

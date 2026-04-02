@@ -18,7 +18,7 @@ class Feedback(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     )
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     feedback_type: Mapped[FeedbackType] = mapped_column(
-        Enum(FeedbackType, name="feedback_type"),
+        Enum(FeedbackType, name="feedback_type", native_enum=False),
         nullable=False,
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)

@@ -1,75 +1,75 @@
 from typing import Any
 
 
-def build_mock_recommendations(
+def build_mock_recommendation_candidates(
     *,
     destination_city: str,
     destination_country: str,
-    dining_context: str | None,
-    preferred_cities: list[str],
-    preferred_keywords: list[str],
-    loved_restaurants: list[str],
 ) -> list[dict[str, Any]]:
-    names = [
-        "Atelier One",
-        "Counter Two",
-        "Market House",
-        "Late Table",
-        "Garden Room",
-    ]
-    price_levels = ["$$$", "$$", "$$", "$", "$$$"]
-    cuisine_sets = [
-        ["seasonal", "tasting-menu"],
-        ["small-plates", "regional"],
-        ["market-driven", "seafood"],
-        ["street-food", "casual"],
-        ["bistro", "comfort-food"],
-    ]
-    vibe_sets = [
-        ["chef-driven", "refined"],
-        ["buzzing", "shared-plates"],
-        ["local-favorite", "bright"],
-        ["late-night", "energetic"],
-        ["calm", "design-forward"],
-    ]
-    base_score = 0.94
-    anchors = loved_restaurants[:3]
-    city_signals = preferred_cities[:3]
-    keyword_signals = preferred_keywords[:4]
-
-    recommendations: list[dict[str, Any]] = []
-    for index, suffix in enumerate(names, start=1):
-        restaurant_name = f"{destination_city} {suffix}"
-        recommendations.append(
-            {
-                "request_context_json": {
-                    "destination_city": destination_city,
-                    "destination_country": destination_country,
-                    "dining_context": dining_context,
-                    "signals_used": {
-                        "preferred_cities": city_signals,
-                        "preferred_keywords": keyword_signals,
-                    },
-                },
-                "restaurant_json": {
-                    "name": restaurant_name,
-                    "city": destination_city,
-                    "country": destination_country,
-                    "price_level": price_levels[index - 1],
-                    "cuisine_tags": cuisine_sets[index - 1],
-                    "vibe_tags": vibe_sets[index - 1],
-                },
-                "score": round(base_score - ((index - 1) * 0.03), 2),
-                "why": (
-                    f"{restaurant_name} matches the user's preference for "
-                    f"{', '.join(keyword_signals[:2]) or 'well-balanced'} dining in {destination_city}."
-                ),
-                "anchors_json": {
-                    "seed_restaurants": anchors,
-                    "matched_cities": city_signals,
-                    "matched_keywords": keyword_signals,
-                },
+    return [
+        {
+            "restaurant_json": {
+                "name": f"{destination_city} Atelier One",
+                "city": destination_city,
+                "country": destination_country,
+                "source": "fallback_mock",
+                "price_level": "$$$",
+                "cuisine_tags": ["seasonal", "tasting-menu", "creative"],
+                "vibe_tags": ["refined", "stylish", "chef-driven"],
+                "formality_score": 0.95,
+                "tourist_profile": "destination",
             }
-        )
-
-    return recommendations
+        },
+        {
+            "restaurant_json": {
+                "name": f"{destination_city} Counter Two",
+                "city": destination_city,
+                "country": destination_country,
+                "source": "fallback_mock",
+                "price_level": "$$",
+                "cuisine_tags": ["small-plates", "creative", "strong food identity"],
+                "vibe_tags": ["lively", "shared-plates", "stylish", "casual"],
+                "formality_score": 0.25,
+                "tourist_profile": "local-leaning",
+            }
+        },
+        {
+            "restaurant_json": {
+                "name": f"{destination_city} Market House",
+                "city": destination_city,
+                "country": destination_country,
+                "source": "fallback_mock",
+                "price_level": "$$",
+                "cuisine_tags": ["market-driven", "strong food identity", "regional"],
+                "vibe_tags": ["local-favorite", "grounded", "authentic", "warm", "neighborhood"],
+                "formality_score": 0.2,
+                "tourist_profile": "local-leaning",
+            }
+        },
+        {
+            "restaurant_json": {
+                "name": f"{destination_city} Late Table",
+                "city": destination_city,
+                "country": destination_country,
+                "source": "fallback_mock",
+                "price_level": "$",
+                "cuisine_tags": ["casual", "street-food", "shared-plates"],
+                "vibe_tags": ["lively", "casual", "energetic"],
+                "formality_score": 0.1,
+                "tourist_profile": "mixed",
+            }
+        },
+        {
+            "restaurant_json": {
+                "name": f"{destination_city} Garden Room",
+                "city": destination_city,
+                "country": destination_country,
+                "source": "fallback_mock",
+                "price_level": "$$$",
+                "cuisine_tags": ["bistro", "creative"],
+                "vibe_tags": ["warm", "stylish", "refined"],
+                "formality_score": 0.65,
+                "tourist_profile": "mixed",
+            }
+        },
+    ]
