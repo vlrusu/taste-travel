@@ -50,6 +50,7 @@ def test_seed_crud_and_taste_profile_generation(client):
     profile = profile_response.json()["taste_profile"]
     assert profile["attributes_json"]["loved_restaurants"] == ["Tokyo ramen counters"]
     assert "Tokyo" in profile["summary"]
+    assert profile["attributes_json"]["default_profile"] is False
 
     fetch_profile_response = client.get("/api/v1/me/taste-profile")
     assert fetch_profile_response.status_code == 200
@@ -76,14 +77,20 @@ def test_recommendation_generation_retrieval_and_feedback(client):
         json={
             "destination_city": "San Sebastian",
             "destination_country": "Spain",
+            "dining_context": "Dinner after a museum day",
         },
     )
 
     assert generate_response.status_code == 201
-    recommendation = generate_response.json()["recommendation"]
+    recommendations = generate_response.json()["recommendations"]
+    assert len(recommendations) == 5
+    recommendation = recommendations[0]
     recommendation_id = recommendation["id"]
     assert recommendation["request_context_json"]["destination_city"] == "San Sebastian"
     assert recommendation["restaurant_json"]["city"] == "San Sebastian"
+    assert recommendation["restaurant_json"]["name"] == "San Sebastian Atelier One"
+    assert recommendation["restaurant_json"]["price_level"] == "$$$"
+    assert "Basque tasting rooms" in recommendation["anchors_json"]["seed_restaurants"]
 
     get_response = client.get(f"/api/v1/recommendations/{recommendation_id}")
     assert get_response.status_code == 200
@@ -99,3 +106,12 @@ def test_recommendation_generation_retrieval_and_feedback(client):
     assert feedback_body["feedback_type"] == "perfect"
     assert feedback_body["notes"] == "Strong first-pass shortlist"
     assert feedback_body["created_at"] is not None
+
+
+def test_taste_profile_generation_without_seeds_returns_default_profile(client):
+    response = client.post("/api/v1/me/taste-profile:generate")
+
+    assert response.status_code == 200
+    profile = response.json()["taste_profile"]
+    assert profile["attributes_json"]["default_profile"] is True
+    assert profile["attributes_json"]["loved_restaurants"] == []

@@ -1,7 +1,7 @@
 from uuid import UUID
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.enums import FeedbackType
 from app.schemas.common import TimestampedResponse
@@ -17,12 +17,13 @@ class RecommendationResponse(TimestampedResponse):
 
 
 class RecommendationGenerateRequest(BaseModel):
-    destination_city: str
-    destination_country: str
+    destination_city: str = Field(..., max_length=255)
+    destination_country: str = Field(..., max_length=255)
+    dining_context: str | None = Field(default=None, max_length=500)
 
 
 class RecommendationGenerateResponse(BaseModel):
-    recommendation: RecommendationResponse
+    recommendations: list[RecommendationResponse]
 
 
 class RecommendationFeedbackRequest(BaseModel):
