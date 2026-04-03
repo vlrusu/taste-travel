@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-
 import {
   Recommendation,
   RecommendationFeedbackType,
@@ -20,8 +19,24 @@ import {
   submitRecommendationFeedback,
   updateMe,
 } from "../lib/api";
-
-import styles from "./page.module.css";
+import {
+  MapPin,
+  Star,
+  Sparkles,
+  Plus,
+  Trash2,
+  ExternalLink,
+  ThumbsUp,
+  ThumbsDown,
+  AlertCircle,
+  ChefHat,
+  Compass,
+  User as UserIcon,
+  Search,
+  DollarSign,
+  Clock,
+} from "lucide-react";
+import clsx from "clsx";
 
 const initialSeedForm = {
   name: "",
@@ -93,19 +108,19 @@ function buildGoogleMapsUrl(recommendation: Recommendation): string {
 
 function formatSeedEnrichmentStatus(seed: SeedRestaurant): string {
   if (!seed.is_verified_place) {
-    return "Manual entry • lower confidence";
+    return "Manual entry";
   }
 
   if (seed.enrichment_status === "ai_completed") {
-    return "Verified place • AI-enriched";
+    return "Verified & AI-enriched";
   }
 
   if (seed.enrichment_status === "deterministic_only") {
-    return "Verified place • enriched";
+    return "Verified & enriched";
   }
 
   if (seed.enrichment_status) {
-    return `Verified place • ${seed.enrichment_status}`;
+    return `Verified (${seed.enrichment_status})`;
   }
 
   return "Verified place";
@@ -133,31 +148,48 @@ function RecommendationCard({ recommendation }: { recommendation: Recommendation
   }
 
   return (
-    <div className={styles.recommendationCard}>
-      <div className={styles.cardTop}>
+    <div className="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+      <div className="mb-4 flex items-start justify-between gap-4">
         <div>
-          <h3 className={styles.restaurantName}>
-            <a href={mapsUrl} target="_blank" rel="noreferrer" className={styles.restaurantLink}>
+          <h3 className="mb-1 flex items-center gap-2 text-lg font-semibold text-card-foreground">
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="transition-colors hover:text-primary"
+            >
               {recommendation.restaurant_json.name}
             </a>
+            <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
           </h3>
-          <p className={styles.locationLine}>
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="h-3.5 w-3.5" />
             {recommendation.restaurant_json.city}
             {recommendation.restaurant_json.country ? `, ${recommendation.restaurant_json.country}` : ""}
           </p>
         </div>
-        <div className={styles.metaGroup}>
-          <span className={styles.pricePill}>{recommendation.restaurant_json.price_level}</span>
-          <span className={styles.score}>Score {recommendation.score.toFixed(2)}</span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-md bg-secondary px-2.5 py-1 text-sm font-semibold text-secondary-foreground">
+            {recommendation.restaurant_json.price_level}
+          </span>
+          <span className="flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-1 text-sm font-semibold text-primary">
+            <Star className="h-3.5 w-3.5 fill-primary" />
+            {recommendation.score.toFixed(1)}
+          </span>
         </div>
       </div>
 
-      <div className={styles.detailGroup}>
+      <div className="mb-4 space-y-3">
         <div>
-          <p className={styles.detailLabel}>Cuisine tags</p>
-          <div className={styles.tagList}>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Cuisine
+          </p>
+          <div className="flex flex-wrap gap-1.5">
             {recommendation.restaurant_json.cuisine_tags.map((tag) => (
-              <span key={`${recommendation.id}-${tag}`} className={styles.tag}>
+              <span
+                key={`${recommendation.id}-${tag}`}
+                className="rounded-md bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+              >
                 {tag}
               </span>
             ))}
@@ -165,10 +197,15 @@ function RecommendationCard({ recommendation }: { recommendation: Recommendation
         </div>
 
         <div>
-          <p className={styles.detailLabel}>Vibe tags</p>
-          <div className={styles.tagList}>
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Vibe
+          </p>
+          <div className="flex flex-wrap gap-1.5">
             {recommendation.restaurant_json.vibe_tags.map((tag) => (
-              <span key={`${recommendation.id}-vibe-${tag}`} className={styles.tag}>
+              <span
+                key={`${recommendation.id}-vibe-${tag}`}
+                className="rounded-md bg-primary/10 px-2 py-0.5 text-xs text-primary"
+              >
                 {tag}
               </span>
             ))}
@@ -176,56 +213,80 @@ function RecommendationCard({ recommendation }: { recommendation: Recommendation
         </div>
       </div>
 
-      <div className={styles.whyBlock}>
-        <p className={styles.detailLabel}>Why it fits</p>
-        <p>{recommendation.why}</p>
+      <div className="mb-4 rounded-lg bg-muted/50 p-3">
+        <p className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Why it fits
+        </p>
+        <p className="text-sm leading-relaxed text-card-foreground">{recommendation.why}</p>
       </div>
 
-      <div className={styles.traitGrid}>
-        <div className={styles.traitSection}>
-          <p className={styles.detailLabel}>Matched traits</p>
+      <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-lg border border-border/50 p-3">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <ThumbsUp className="h-3 w-3 text-green-500" />
+            Matched traits
+          </p>
           {recommendation.anchors_json.matched_traits?.length ? (
-            <ul className={styles.traitList}>
+            <ul className="space-y-1 text-sm text-card-foreground">
               {recommendation.anchors_json.matched_traits.map((trait) => (
-                <li key={`${recommendation.id}-match-${trait}`}>{trait}</li>
+                <li key={`${recommendation.id}-match-${trait}`} className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-green-500" />
+                  {trait}
+                </li>
               ))}
             </ul>
           ) : (
-            <p className={styles.subtle}>No strong positive traits highlighted.</p>
+            <p className="text-sm text-muted-foreground">No strong matches</p>
           )}
         </div>
 
-        <div className={styles.traitSection}>
-          <p className={styles.detailLabel}>Caution traits</p>
+        <div className="rounded-lg border border-border/50 p-3">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <AlertCircle className="h-3 w-3 text-amber-500" />
+            Caution traits
+          </p>
           {recommendation.anchors_json.caution_traits?.length ? (
-            <ul className={styles.traitList}>
+            <ul className="space-y-1 text-sm text-card-foreground">
               {recommendation.anchors_json.caution_traits.map((trait) => (
-                <li key={`${recommendation.id}-caution-${trait}`}>{trait}</li>
+                <li key={`${recommendation.id}-caution-${trait}`} className="flex items-center gap-1.5">
+                  <span className="h-1 w-1 rounded-full bg-amber-500" />
+                  {trait}
+                </li>
               ))}
             </ul>
           ) : (
-            <p className={styles.subtle}>No caution traits for this result.</p>
+            <p className="text-sm text-muted-foreground">No cautions</p>
           )}
         </div>
       </div>
 
-      <div className={styles.feedbackBlock}>
-        <p className={styles.detailLabel}>Quick feedback</p>
-        <div className={styles.feedbackActions}>
+      <div className="border-t border-border pt-4">
+        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          Quick feedback
+        </p>
+        <div className="flex flex-wrap gap-2">
           {feedbackOptions.map((option) => (
             <button
               key={`${recommendation.id}-${option.value}`}
               type="button"
-              className={styles.feedbackButton}
               onClick={() => void handleFeedback(option.value)}
               disabled={feedbackLoading}
+              className={clsx(
+                "rounded-md border border-border px-3 py-1.5 text-sm transition-all",
+                "hover:border-primary hover:bg-primary/10 hover:text-primary",
+                "disabled:cursor-not-allowed disabled:opacity-50"
+              )}
             >
-              {feedbackLoading ? "Saving…" : option.label}
+              {option.label}
             </button>
           ))}
         </div>
-        {feedbackSaved ? <p className={styles.feedbackSaved}>Feedback saved</p> : null}
-        {feedbackError ? <p className={styles.error}>{feedbackError}</p> : null}
+        {feedbackSaved && (
+          <p className="mt-2 text-sm text-green-500">Feedback saved!</p>
+        )}
+        {feedbackError && (
+          <p className="mt-2 text-sm text-destructive">{feedbackError}</p>
+        )}
       </div>
     </div>
   );
@@ -461,43 +522,101 @@ export default function Page() {
   }
 
   return (
-    <main className={styles.page}>
-      <section className={styles.hero}>
-        <div>
-          <p className={styles.eyebrow}>Taste Travel MVP</p>
-          <h1>Restaurant recommendations shaped by your travel taste profile.</h1>
+    <main className="mx-auto min-h-screen max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Hero Section */}
+      <section className="mb-10 rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/5 p-8 sm:p-10">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <Compass className="h-5 w-5 text-primary" />
+          </div>
+          <span className="text-xs font-semibold uppercase tracking-widest text-primary">
+            Taste Travel
+          </span>
         </div>
+        <h1 className="text-balance text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+          Restaurant recommendations shaped by your travel taste profile.
+        </h1>
+        <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+          Tell us about restaurants you love, and we&apos;ll find your perfect spots anywhere in the world.
+        </p>
       </section>
 
-      <section className={styles.grid}>
-        <article className={styles.card}>
-          <h2>User profile</h2>
-          {profileLoading ? <p>Loading profile…</p> : null}
-          {profileError ? <p className={styles.error}>{profileError}</p> : null}
+      {/* Profile & Seeds Grid */}
+      <section className="mb-8 grid gap-6 lg:grid-cols-2">
+        {/* User Profile Card */}
+        <article className="rounded-xl border border-border bg-card p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary">
+              <UserIcon className="h-4 w-4 text-secondary-foreground" />
+            </div>
+            <h2 className="text-lg font-semibold text-card-foreground">User Profile</h2>
+          </div>
+
+          {profileLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              Loading profile...
+            </div>
+          ) : null}
+
+          {profileError ? (
+            <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{profileError}</p>
+          ) : null}
+
           {user ? (
-            <form className={styles.form} onSubmit={handleProfileSave}>
-              <p className={styles.subtle}>This session is temporary. Refreshing the page starts a new profile.</p>
-              <label>
-                <span>Home city</span>
+            <form onSubmit={handleProfileSave} className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                This session is temporary. Refreshing starts a new profile.
+              </p>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
+                  Home city
+                </label>
                 <input
                   value={homeCity}
                   onChange={(event) => setHomeCity(event.target.value)}
                   placeholder="Chicago"
+                  className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                 />
-              </label>
-              <button type="submit" disabled={profileSaving}>
-                {profileSaving ? "Saving…" : "Save profile"}
+              </div>
+              <button
+                type="submit"
+                disabled={profileSaving}
+                className={clsx(
+                  "inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-all",
+                  "hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
+                  "disabled:cursor-not-allowed disabled:opacity-50"
+                )}
+              >
+                {profileSaving ? (
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save profile"
+                )}
               </button>
             </form>
           ) : null}
         </article>
 
-        <article className={styles.card}>
-          <h2>Seed restaurants</h2>
-          <form className={styles.form} onSubmit={handleSeedSubmit}>
-            <label>
-              <span>City</span>
-              <input
+        {/* Seed Restaurants Card */}
+        <article className="rounded-xl border border-border bg-card p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+              <ChefHat className="h-4 w-4 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold text-card-foreground">Seed Restaurants</h2>
+          </div>
+
+          <form onSubmit={handleSeedSubmit} className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
+                  City
+                </label>
+                <input
                   value={seedForm.city}
                   disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
                   onChange={(event) => {
@@ -507,11 +626,14 @@ export default function Page() {
                     setSeedSearchPerformed(false);
                   }}
                   required
+                  className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                 />
-            </label>
-            <label className={styles.autocompleteField}>
-              <span>Name</span>
-              <input
+              </div>
+              <div className="relative">
+                <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
+                  Name
+                </label>
+                <input
                   value={seedForm.name}
                   disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
                   onChange={(event) => {
@@ -521,147 +643,268 @@ export default function Page() {
                     setSeedSearchPerformed(false);
                   }}
                   required
+                  className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
                 />
-              {seedCandidates.length > 0 ? (
-                <div className={styles.candidateDropdown}>
-                  {seedCandidates.map((candidate) => (
-                    <button
-                      key={candidate.source_place_id}
-                      type="button"
-                      className={`${styles.candidateButton} ${
-                        selectedSeedCandidate?.source_place_id === candidate.source_place_id ? styles.candidateButtonSelected : ""
-                      }`}
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => handleSeedCandidateSelect(candidate)}
-                      disabled={seedSubmitting}
-                    >
-                      <strong>{candidate.name}</strong>
-                      <span>{candidate.formatted_address || candidate.city}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </label>
+                {seedCandidates.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-56 overflow-y-auto rounded-lg border border-border bg-card shadow-xl">
+                    {seedCandidates.map((candidate) => (
+                      <button
+                        key={candidate.source_place_id}
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => handleSeedCandidateSelect(candidate)}
+                        disabled={seedSubmitting}
+                        className={clsx(
+                          "w-full px-4 py-3 text-left transition-colors hover:bg-secondary",
+                          selectedSeedCandidate?.source_place_id === candidate.source_place_id && "bg-secondary"
+                        )}
+                      >
+                        <strong className="block text-sm text-card-foreground">{candidate.name}</strong>
+                        <span className="text-xs text-muted-foreground">
+                          {candidate.formatted_address || candidate.city}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {selectedSeedCandidate ? (
-              <div className={styles.seedHintBlock}>
-                <p className={styles.feedbackSaved}>
+              <div className="rounded-lg bg-primary/10 p-3">
+                <p className="text-sm font-medium text-primary">
                   Verified place selected: {selectedSeedCandidate.name}
                 </p>
-                {previewSeedTraits(selectedSeedCandidate).length ? (
-                  <p className={styles.subtle}>
-                    Trait preview: {previewSeedTraits(selectedSeedCandidate).join(", ")}
+                {previewSeedTraits(selectedSeedCandidate).length > 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Traits: {previewSeedTraits(selectedSeedCandidate).join(", ")}
                   </p>
-                ) : null}
+                )}
               </div>
             ) : (
-              <p className={styles.subtle}>
-                Enter the city first, then type the restaurant name. Selecting a verified place gives stronger taste signals even if notes are brief.
+              <p className="text-sm text-muted-foreground">
+                Enter city first, then type the restaurant name for verified matches.
               </p>
             )}
-            {seedSearchLoading ? <p className={styles.subtle}>Searching places…</p> : null}
-            {seedSearchPerformed && !seedSearchLoading && seedCandidates.length === 0 ? (
-              <p className={styles.subtle}>No strong Google Places matches found. You can still save manually.</p>
-            ) : null}
-            <label>
-              <span>Sentiment</span>
-              <select
-                value={seedForm.sentiment}
-                disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
-                onChange={(event) =>
-                  setSeedForm((current) => ({
-                    ...current,
-                    sentiment: event.target.value as "love" | "dislike",
-                  }))
-                }
-              >
-                <option value="love">love</option>
-                <option value="dislike">dislike</option>
-              </select>
-            </label>
-            <label>
-              <span>Notes</span>
+
+            {seedSearchLoading && (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Search className="h-3.5 w-3.5 animate-pulse" />
+                Searching places...
+              </p>
+            )}
+
+            {seedSearchPerformed && !seedSearchLoading && seedCandidates.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No Google Places matches found. You can still save manually.
+              </p>
+            )}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
+                  Sentiment
+                </label>
+                <select
+                  value={seedForm.sentiment}
+                  disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
+                  onChange={(event) =>
+                    setSeedForm((current) => ({
+                      ...current,
+                      sentiment: event.target.value as "love" | "dislike",
+                    }))
+                  }
+                  className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="love">Love it</option>
+                  <option value="dislike">Dislike it</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
+                Notes
+              </label>
               <textarea
-                rows={4}
+                rows={3}
                 value={seedForm.notes}
                 disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
                 onChange={(event) => setSeedForm((current) => ({ ...current, notes: event.target.value }))}
                 placeholder="warm, creative, neighborhood feel, not stuffy"
+                className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
               />
-            </label>
-            <button type="submit" disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}>
-              {seedSubmitting ? "Adding…" : seedsLoading ? "Refreshing…" : "Add seed restaurant"}
+            </div>
+
+            <button
+              type="submit"
+              disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
+              className={clsx(
+                "inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-all",
+                "hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
+                "disabled:cursor-not-allowed disabled:opacity-50"
+              )}
+            >
+              <Plus className="h-4 w-4" />
+              {seedSubmitting ? "Adding..." : seedsLoading ? "Refreshing..." : "Add seed restaurant"}
             </button>
           </form>
 
-          {seedError ? <p className={styles.error}>{seedError}</p> : null}
-          {seedsLoading ? <p>Loading seeds…</p> : null}
-          <div className={styles.stack}>
+          {seedError && (
+            <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{seedError}</p>
+          )}
+
+          {seedsLoading ? (
+            <div className="mt-4 flex items-center gap-2 text-muted-foreground">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              Loading seeds...
+            </div>
+          ) : null}
+
+          <div className="mt-4 space-y-3">
             {seeds.map((seed) => (
-              <div key={seed.id} className={styles.inlineCard}>
-                <div className={styles.row}>
-                  <div className={styles.seedHeader}>
-                    <strong>{seed.name}</strong>
-                    <span className={styles.badge}>{seed.sentiment}</span>
+              <div
+                key={seed.id}
+                className="group rounded-lg border border-border bg-muted/30 p-4 transition-colors hover:border-border/80"
+              >
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <strong className="text-card-foreground">{seed.name}</strong>
+                    <span
+                      className={clsx(
+                        "rounded-md px-2 py-0.5 text-xs font-medium",
+                        seed.sentiment === "love"
+                          ? "bg-green-500/10 text-green-500"
+                          : "bg-red-500/10 text-red-500"
+                      )}
+                    >
+                      {seed.sentiment}
+                    </span>
                   </div>
                   <button
                     type="button"
-                    className={styles.deleteButton}
                     onClick={() => void handleDeleteSeed(seed.id)}
                     disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
+                    className="rounded-md p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {deletingSeedId === seed.id ? "Deleting…" : "Delete"}
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
-                <p>{seed.city}</p>
-                <p className={styles.subtle}>{formatSeedEnrichmentStatus(seed)}</p>
-                {seed.formatted_address ? <p className={styles.subtle}>{seed.formatted_address}</p> : null}
-                {previewSeedTraits(seed).length ? (
-                  <p className={styles.subtle}>Traits: {previewSeedTraits(seed).join(", ")}</p>
-                ) : null}
-                {seed.ai_summary_text ? <p className={styles.subtle}>{seed.ai_summary_text}</p> : null}
-                <p className={styles.subtle}>{seed.notes || "No notes"}</p>
+                <p className="text-sm text-muted-foreground">{seed.city}</p>
+                <p className="text-xs text-muted-foreground">{formatSeedEnrichmentStatus(seed)}</p>
+                {seed.formatted_address && (
+                  <p className="text-xs text-muted-foreground">{seed.formatted_address}</p>
+                )}
+                {previewSeedTraits(seed).length > 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Traits: {previewSeedTraits(seed).join(", ")}
+                  </p>
+                )}
+                {seed.ai_summary_text && (
+                  <p className="mt-1 text-xs text-muted-foreground">{seed.ai_summary_text}</p>
+                )}
+                <p className="mt-1 text-xs text-muted-foreground">{seed.notes || "No notes"}</p>
               </div>
             ))}
-            {!seedsLoading && seeds.length === 0 ? <p className={styles.subtle}>No seed restaurants yet.</p> : null}
+            {!seedsLoading && seeds.length === 0 && (
+              <p className="text-center text-sm text-muted-foreground">No seed restaurants yet.</p>
+            )}
           </div>
         </article>
       </section>
 
-      <section className={styles.grid}>
-        <article className={styles.card}>
-          <div className={styles.row}>
-            <h2>Taste profile</h2>
-            <button type="button" onClick={handleGenerateTasteProfile} disabled={tasteLoading}>
-              {tasteLoading ? "Generating…" : "Generate profile"}
+      {/* Taste Profile & Recommendations Grid */}
+      <section className="grid gap-6 lg:grid-cols-2">
+        {/* Taste Profile Card */}
+        <article className="rounded-xl border border-border bg-card p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                <Sparkles className="h-4 w-4 text-primary" />
+              </div>
+              <h2 className="text-lg font-semibold text-card-foreground">Taste Profile</h2>
+            </div>
+            <button
+              type="button"
+              onClick={handleGenerateTasteProfile}
+              disabled={tasteLoading}
+              className={clsx(
+                "inline-flex items-center gap-2 rounded-lg border border-primary bg-transparent px-4 py-2 text-sm font-medium text-primary transition-all",
+                "hover:bg-primary hover:text-primary-foreground",
+                "disabled:cursor-not-allowed disabled:opacity-50"
+              )}
+            >
+              {tasteLoading ? (
+                <>
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Generate
+                </>
+              )}
             </button>
           </div>
-          {tasteError ? <p className={styles.error}>{tasteError}</p> : null}
+
+          {tasteError && (
+            <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{tasteError}</p>
+          )}
+
           {tasteProfile ? (
-            <div className={styles.stack}>
-              <p>{tasteProfile.summary}</p>
-              <div>
-                <h3>Vibe</h3>
-                <p>{(tasteProfile.attributes_json.vibe ?? []).join(", ") || "No vibe signals yet."}</p>
-              </div>
-              <div>
-                <h3>Food style</h3>
-                <p>{(tasteProfile.attributes_json.food_style ?? []).join(", ") || "No food-style signals yet."}</p>
-              </div>
-              <div>
-                <h3>Avoid</h3>
-                <p>{(tasteProfile.attributes_json.avoid ?? []).join(", ") || "No clear avoidance signals yet."}</p>
+            <div className="space-y-4">
+              <p className="rounded-lg bg-muted/50 p-4 text-sm leading-relaxed text-card-foreground">
+                {tasteProfile.summary}
+              </p>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-lg border border-border/50 p-3">
+                  <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Vibe
+                  </h3>
+                  <p className="text-sm text-card-foreground">
+                    {(tasteProfile.attributes_json.vibe ?? []).join(", ") || "No vibe signals"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border/50 p-3">
+                  <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Food Style
+                  </h3>
+                  <p className="text-sm text-card-foreground">
+                    {(tasteProfile.attributes_json.food_style ?? []).join(", ") || "No food-style signals"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border/50 p-3">
+                  <h3 className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Avoid
+                  </h3>
+                  <p className="text-sm text-card-foreground">
+                    {(tasteProfile.attributes_json.avoid ?? []).join(", ") || "No avoidance signals"}
+                  </p>
+                </div>
               </div>
             </div>
           ) : (
-            <p className={styles.subtle}>Generate a taste profile to see the summary and structured attributes.</p>
+            <p className="text-sm text-muted-foreground">
+              Generate a taste profile to see the summary and structured attributes.
+            </p>
           )}
         </article>
 
-        <article className={styles.card}>
-          <h2>Recommendations</h2>
-          <form className={styles.form} onSubmit={handleRecommendationSubmit}>
-            <label>
-              <span>Destination city</span>
+        {/* Recommendations Card */}
+        <article className="rounded-xl border border-border bg-card p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+              <MapPin className="h-4 w-4 text-primary" />
+            </div>
+            <h2 className="text-lg font-semibold text-card-foreground">Recommendations</h2>
+          </div>
+
+          <form onSubmit={handleRecommendationSubmit} className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
+                Destination city
+              </label>
               <input
                 value={recommendationForm.city}
                 disabled={recommendationLoading}
@@ -672,46 +915,63 @@ export default function Page() {
                   }))
                 }
                 required
+                placeholder="Paris, Tokyo, New York..."
+                className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
               />
-            </label>
-            <label>
-              <span>Budget</span>
-              <select
-                value={recommendationForm.budget}
-                disabled={recommendationLoading}
-                onChange={(event) =>
-                  setRecommendationForm((current) => ({
-                    ...current,
-                    budget: event.target.value,
-                  }))
-                }
-              >
-                <option value="$">$</option>
-                <option value="$$">$$</option>
-                <option value="$$$">$$$</option>
-                <option value="$$$$">$$$$</option>
-              </select>
-            </label>
-            <label>
-              <span>Max distance (meters)</span>
-              <input
-                type="number"
-                min="1"
-                value={recommendationForm.max_distance_meters}
-                disabled={recommendationLoading}
-                onChange={(event) =>
-                  setRecommendationForm((current) => ({
-                    ...current,
-                    max_distance_meters: event.target.value,
-                  }))
-                }
-                required
-              />
-            </label>
-            <label>
-              <span>Special request</span>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  Budget
+                </label>
+                <select
+                  value={recommendationForm.budget}
+                  disabled={recommendationLoading}
+                  onChange={(event) =>
+                    setRecommendationForm((current) => ({
+                      ...current,
+                      budget: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="$">$ - Budget</option>
+                  <option value="$$">$$ - Moderate</option>
+                  <option value="$$$">$$$ - Upscale</option>
+                  <option value="$$$$">$$$$ - Fine Dining</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                  <Clock className="h-3.5 w-3.5" />
+                  Max distance (meters)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={recommendationForm.max_distance_meters}
+                  disabled={recommendationLoading}
+                  onChange={(event) =>
+                    setRecommendationForm((current) => ({
+                      ...current,
+                      max_distance_meters: event.target.value,
+                    }))
+                  }
+                  required
+                  className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-muted-foreground">
+                Special request
+              </label>
               <textarea
-                rows={3}
+                rows={2}
                 value={recommendationForm.special_request}
                 disabled={recommendationLoading}
                 onChange={(event) =>
@@ -721,22 +981,55 @@ export default function Page() {
                   }))
                 }
                 placeholder="memorable but not too formal"
+                className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
               />
-            </label>
-            <button type="submit" disabled={recommendationLoading}>
-              {recommendationLoading ? "Generating…" : "Generate recommendations"}
+            </div>
+
+            <button
+              type="submit"
+              disabled={recommendationLoading}
+              className={clsx(
+                "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-all",
+                "hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
+                "disabled:cursor-not-allowed disabled:opacity-50"
+              )}
+            >
+              {recommendationLoading ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Generate recommendations
+                </>
+              )}
             </button>
           </form>
 
-          {recommendationError ? <p className={styles.error}>{recommendationError}</p> : null}
-          {fallbackWarning ? <p className={styles.fallbackWarning}>{fallbackWarning}</p> : null}
-          <div className={styles.recommendationList}>
+          {recommendationError && (
+            <p className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              {recommendationError}
+            </p>
+          )}
+
+          {fallbackWarning && (
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+              <p className="text-sm text-amber-500">{fallbackWarning}</p>
+            </div>
+          )}
+
+          <div className="mt-6 space-y-4">
             {recommendations.map((recommendation) => (
               <RecommendationCard key={recommendation.id} recommendation={recommendation} />
             ))}
-            {!recommendationLoading && recommendations.length === 0 ? (
-              <p className={styles.subtle}>Generate recommendations to see ranked restaurant cards.</p>
-            ) : null}
+            {!recommendationLoading && recommendations.length === 0 && (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Generate recommendations to see ranked restaurant cards.
+              </p>
+            )}
           </div>
         </article>
       </section>
