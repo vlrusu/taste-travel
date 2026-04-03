@@ -23,11 +23,8 @@ class RecommendationLocationRequest(BaseModel):
 
 
 class RecommendationContextRequest(BaseModel):
-    meal_type: str | None = Field(default=None, max_length=100)
-    party_size: int | None = Field(default=None, ge=1)
     budget: str | None = Field(default=None, max_length=10)
     max_distance_meters: int | None = Field(default=None, ge=1)
-    transport_mode: str | None = Field(default=None, max_length=50)
     special_request: str | None = Field(default=None, max_length=500)
 
 

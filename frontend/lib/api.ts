@@ -1,6 +1,8 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") || "http://127.0.0.1:8000/api/v1";
 
+let temporaryUserId: string | null = null;
+
 export type User = {
   id: string;
   email: string | null;
@@ -115,11 +117,16 @@ type JsonRequestOptions = Omit<RequestInit, "body" | "headers"> & {
   json?: unknown;
 };
 
+export function setTemporaryUserId(userId: string | null) {
+  temporaryUserId = userId;
+}
+
 async function request<T>(path: string, options: JsonRequestOptions = {}): Promise<T> {
   const { headers, json, ...requestInit } = options;
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...requestInit,
     headers: {
+      ...(temporaryUserId ? { "X-Temp-User-Id": temporaryUserId } : {}),
       ...(json === undefined ? {} : { "Content-Type": "application/json" }),
       ...(headers ?? {}),
     },
@@ -218,11 +225,8 @@ export function generateRecommendations(payload: {
     lon?: number | null;
   };
   context: {
-    meal_type: string;
-    party_size: number;
     budget: string;
     max_distance_meters: number;
-    transport_mode: string;
     special_request: string;
   };
 }) {
@@ -235,11 +239,8 @@ export function generateRecommendations(payload: {
         ...(payload.location.lon == null ? {} : { lon: payload.location.lon }),
       },
       context: {
-        meal_type: payload.context.meal_type || null,
-        party_size: payload.context.party_size,
         budget: payload.context.budget || null,
         max_distance_meters: payload.context.max_distance_meters,
-        transport_mode: payload.context.transport_mode || null,
         special_request: payload.context.special_request || null,
       },
     },

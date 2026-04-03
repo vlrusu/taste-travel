@@ -413,11 +413,8 @@ class RecommendationService:
                             "lon": resolved_location.lon,
                         },
                         "context": {
-                            "meal_type": context.meal_type,
-                            "party_size": context.party_size,
                             "budget": context.budget,
                             "max_distance_meters": context.max_distance_meters,
-                            "transport_mode": context.transport_mode,
                             "special_request": context.special_request,
                         },
                     },
@@ -496,7 +493,7 @@ class RecommendationService:
                     lat=location.lat,
                     lon=location.lon,
                     radius_meters=radius,
-                    meal_type=context.meal_type,
+                    meal_type="dinner",
                 )
                 for candidate in batch:
                     key = self._restaurant_key(candidate["restaurant_json"])

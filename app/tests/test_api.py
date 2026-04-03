@@ -1,3 +1,6 @@
+from uuid import uuid4
+
+
 def test_health_check(client):
     response = client.get("/api/v1/health")
 
@@ -47,6 +50,32 @@ def test_get_and_patch_me(client):
     assert body["email"] == "alex@example.com"
     assert body["home_city"] == "Chicago"
     assert body["onboarding_complete"] is True
+
+
+def test_temp_user_header_creates_isolated_temporary_profile(client):
+    temp_user_id = str(uuid4())
+    other_temp_user_id = str(uuid4())
+
+    get_response = client.get("/api/v1/me", headers={"X-Temp-User-Id": temp_user_id})
+
+    assert get_response.status_code == 200
+    assert get_response.json()["id"] == temp_user_id
+    assert get_response.json()["email"] is None
+
+    patch_response = client.patch(
+        "/api/v1/me",
+        headers={"X-Temp-User-Id": temp_user_id},
+        json={"home_city": "Lisbon"},
+    )
+
+    assert patch_response.status_code == 200
+    assert patch_response.json()["home_city"] == "Lisbon"
+
+    isolated_response = client.get("/api/v1/me", headers={"X-Temp-User-Id": other_temp_user_id})
+
+    assert isolated_response.status_code == 200
+    assert isolated_response.json()["id"] == other_temp_user_id
+    assert isolated_response.json()["home_city"] is None
 
 
 def test_seed_crud_and_taste_profile_generation(client):
@@ -593,11 +622,8 @@ def test_recommendation_ranking_changes_when_ai_enriched_traits_are_present(clie
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "local and not too formal",
             },
         },
@@ -629,11 +655,8 @@ def test_recommendation_generation_retrieval_and_feedback(client):
                 "lon": -1.9812,
             },
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "not too formal, more local than touristy",
             },
         },
@@ -686,11 +709,8 @@ def test_recent_feedback_feeds_back_into_recommendation_scoring(client):
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "memorable but not too formal",
             },
         },
@@ -725,11 +745,8 @@ def test_recent_feedback_feeds_back_into_recommendation_scoring(client):
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "memorable but not too formal",
             },
         },
@@ -761,11 +778,8 @@ def test_recent_negative_feedback_excludes_same_restaurant_from_next_results(cli
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "local feel",
             },
         },
@@ -785,11 +799,8 @@ def test_recent_negative_feedback_excludes_same_restaurant_from_next_results(cli
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "local feel",
             },
         },
@@ -817,11 +828,8 @@ def test_rejecting_entire_first_batch_does_not_return_same_list(client):
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "local feel",
             },
         },
@@ -844,11 +852,8 @@ def test_rejecting_entire_first_batch_does_not_return_same_list(client):
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "local feel",
             },
         },
@@ -877,11 +882,8 @@ def test_less_formal_places_rank_above_tasting_menu_for_anti_stuffy_profile(clie
         json={
             "location": {"city": "Barcelona", "lat": 41.3874, "lon": 2.1686},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "not too formal",
             },
         },
@@ -914,11 +916,8 @@ def test_budget_preference_ranks_dollar_match_above_more_expensive_option(client
         json={
             "location": {"city": "Portland", "lat": 45.5152, "lon": -122.6784},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": None,
             },
         },
@@ -952,11 +951,8 @@ def test_recommendation_explanations_are_distinct_across_top_five(client):
         json={
             "location": {"city": "Mexico City", "lat": 19.4326, "lon": -99.1332},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "shared plates and local feel",
             },
         },
@@ -984,11 +980,8 @@ def test_budget_and_special_request_are_present_and_affect_scores(client):
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "memorable but not too formal",
             },
         },
@@ -1030,11 +1023,8 @@ def test_recommendations_fall_back_to_fake_catalog_when_places_lookup_fails(clie
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "memorable but not too formal",
             },
         },
@@ -1098,11 +1088,8 @@ def test_recommendations_geocode_city_when_lat_lon_are_missing(client, monkeypat
         json={
             "location": {"city": "Lisbon"},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "memorable but not too formal",
             },
         },
@@ -1175,11 +1162,8 @@ def test_recommendations_expand_google_search_after_suppression_before_using_fal
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "local feel",
             },
         },
@@ -1201,11 +1185,8 @@ def test_recommendations_expand_google_search_after_suppression_before_using_fal
         json={
             "location": {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "local feel",
             },
         },
@@ -1462,11 +1443,8 @@ def test_rootstock_avec_profile_ranks_local_food_forward_above_corporate_upscale
         json={
             "location": {"city": "Chicago", "lat": 41.8781, "lon": -87.6298},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "food-first, local, not too formal",
             },
         },
@@ -1590,11 +1568,8 @@ def test_corporate_upscale_seed_profile_can_prefer_polished_destination_dining(c
         json={
             "location": {"city": "Chicago", "lat": 41.8781, "lon": -87.6298},
             "context": {
-                "meal_type": "dinner",
-                "party_size": 2,
                 "budget": "$$$$",
                 "max_distance_meters": 2000,
-                "transport_mode": "walk",
                 "special_request": "special occasion dinner",
             },
         },

@@ -16,6 +16,7 @@ import {
   getMe,
   getSeeds,
   searchSeedPlaces,
+  setTemporaryUserId,
   submitRecommendationFeedback,
   updateMe,
 } from "../lib/api";
@@ -31,11 +32,8 @@ const initialSeedForm = {
 
 const initialRecommendationForm = {
   city: "",
-  meal_type: "dinner",
-  party_size: "2",
   budget: "$$",
   max_distance_meters: "2000",
-  transport_mode: "walk",
   special_request: "memorable but not too formal",
 };
 
@@ -288,6 +286,8 @@ export default function Page() {
     async function loadInitialData() {
       try {
         setProfileLoading(true);
+        const tempUserId = crypto.randomUUID();
+        setTemporaryUserId(tempUserId);
         const [me, seedList] = await Promise.all([getMe(), getSeeds()]);
         setUser(me);
         setHomeCity(me.home_city ?? "");
@@ -303,6 +303,9 @@ export default function Page() {
     }
 
     void loadInitialData();
+    return () => {
+      setTemporaryUserId(null);
+    };
   }, []);
 
   useEffect(() => {
@@ -440,11 +443,8 @@ export default function Page() {
           city: recommendationForm.city.trim(),
         },
         context: {
-          meal_type: recommendationForm.meal_type,
-          party_size: Number(recommendationForm.party_size),
           budget: recommendationForm.budget,
           max_distance_meters: Number(recommendationForm.max_distance_meters),
-          transport_mode: recommendationForm.transport_mode,
           special_request: recommendationForm.special_request,
         },
       });
@@ -476,10 +476,7 @@ export default function Page() {
           {profileError ? <p className={styles.error}>{profileError}</p> : null}
           {user ? (
             <form className={styles.form} onSubmit={handleProfileSave}>
-              <label>
-                <span>Email</span>
-                <input value={user.email ?? ""} disabled readOnly />
-              </label>
+              <p className={styles.subtle}>This session is temporary. Refreshing the page starts a new profile.</p>
               <label>
                 <span>Home city</span>
                 <input
@@ -678,36 +675,6 @@ export default function Page() {
               />
             </label>
             <label>
-              <span>Meal type</span>
-              <input
-                value={recommendationForm.meal_type}
-                disabled={recommendationLoading}
-                onChange={(event) =>
-                  setRecommendationForm((current) => ({
-                    ...current,
-                    meal_type: event.target.value,
-                  }))
-                }
-                placeholder="dinner"
-              />
-            </label>
-            <label>
-              <span>Party size</span>
-              <input
-                type="number"
-                min="1"
-                value={recommendationForm.party_size}
-                disabled={recommendationLoading}
-                onChange={(event) =>
-                  setRecommendationForm((current) => ({
-                    ...current,
-                    party_size: event.target.value,
-                  }))
-                }
-                required
-              />
-            </label>
-            <label>
               <span>Budget</span>
               <select
                 value={recommendationForm.budget}
@@ -739,20 +706,6 @@ export default function Page() {
                   }))
                 }
                 required
-              />
-            </label>
-            <label>
-              <span>Transport mode</span>
-              <input
-                value={recommendationForm.transport_mode}
-                disabled={recommendationLoading}
-                onChange={(event) =>
-                  setRecommendationForm((current) => ({
-                    ...current,
-                    transport_mode: event.target.value,
-                  }))
-                }
-                placeholder="walk"
               />
             </label>
             <label>
