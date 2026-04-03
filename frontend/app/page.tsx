@@ -27,7 +27,6 @@ import {
   Trash2,
   ExternalLink,
   ThumbsUp,
-  ThumbsDown,
   AlertCircle,
   ChefHat,
   Compass,
@@ -35,8 +34,10 @@ import {
   Search,
   DollarSign,
   Clock,
-} from "lucide-react";
-import clsx from "clsx";
+  Loader2,
+  Heart,
+  Check,
+} from "../components/icons";
 
 const initialSeedForm = {
   name: "",
@@ -271,11 +272,7 @@ function RecommendationCard({ recommendation }: { recommendation: Recommendation
               type="button"
               onClick={() => void handleFeedback(option.value)}
               disabled={feedbackLoading}
-              className={clsx(
-                "rounded-md border border-border px-3 py-1.5 text-sm transition-all",
-                "hover:border-primary hover:bg-primary/10 hover:text-primary",
-                "disabled:cursor-not-allowed disabled:opacity-50"
-              )}
+              className="rounded-md border border-border px-3 py-1.5 text-sm transition-all hover:border-primary hover:bg-primary/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
             >
               {option.label}
             </button>
@@ -582,11 +579,7 @@ export default function Page() {
               <button
                 type="submit"
                 disabled={profileSaving}
-                className={clsx(
-                  "inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-all",
-                  "hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
-                  "disabled:cursor-not-allowed disabled:opacity-50"
-                )}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {profileSaving ? (
                   <>
@@ -654,10 +647,7 @@ export default function Page() {
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={() => handleSeedCandidateSelect(candidate)}
                         disabled={seedSubmitting}
-                        className={clsx(
-                          "w-full px-4 py-3 text-left transition-colors hover:bg-secondary",
-                          selectedSeedCandidate?.source_place_id === candidate.source_place_id && "bg-secondary"
-                        )}
+                        className={`w-full px-4 py-3 text-left transition-colors hover:bg-secondary ${selectedSeedCandidate?.source_place_id === candidate.source_place_id ? "bg-secondary" : ""}`}
                       >
                         <strong className="block text-sm text-card-foreground">{candidate.name}</strong>
                         <span className="text-xs text-muted-foreground">
@@ -739,11 +729,7 @@ export default function Page() {
             <button
               type="submit"
               disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
-              className={clsx(
-                "inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-all",
-                "hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
-                "disabled:cursor-not-allowed disabled:opacity-50"
-              )}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 font-medium text-primary-foreground transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
               {seedSubmitting ? "Adding..." : seedsLoading ? "Refreshing..." : "Add seed restaurant"}
@@ -771,12 +757,7 @@ export default function Page() {
                   <div className="flex flex-wrap items-center gap-2">
                     <strong className="text-card-foreground">{seed.name}</strong>
                     <span
-                      className={clsx(
-                        "rounded-md px-2 py-0.5 text-xs font-medium",
-                        seed.sentiment === "love"
-                          ? "bg-green-500/10 text-green-500"
-                          : "bg-red-500/10 text-red-500"
-                      )}
+                      className={`rounded-md px-2 py-0.5 text-xs font-medium ${seed.sentiment === "love" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}
                     >
                       {seed.sentiment}
                     </span>
@@ -828,11 +809,7 @@ export default function Page() {
               type="button"
               onClick={handleGenerateTasteProfile}
               disabled={tasteLoading}
-              className={clsx(
-                "inline-flex items-center gap-2 rounded-lg border border-primary bg-transparent px-4 py-2 text-sm font-medium text-primary transition-all",
-                "hover:bg-primary hover:text-primary-foreground",
-                "disabled:cursor-not-allowed disabled:opacity-50"
-              )}
+              className="inline-flex items-center gap-2 rounded-lg border border-primary bg-transparent px-4 py-2 text-sm font-medium text-primary transition-all hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
               {tasteLoading ? (
                 <>
@@ -988,11 +965,7 @@ export default function Page() {
             <button
               type="submit"
               disabled={recommendationLoading}
-              className={clsx(
-                "inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-all",
-                "hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background",
-                "disabled:cursor-not-allowed disabled:opacity-50"
-              )}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
             >
               {recommendationLoading ? (
                 <>
