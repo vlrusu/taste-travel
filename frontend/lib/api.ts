@@ -61,6 +61,7 @@ export type SeedPlaceCandidate = {
   raw_place_metadata_json: Record<string, unknown> | null;
   raw_review_text: string | null;
   derived_traits_json: Record<string, unknown> | null;
+  ai_summary_text: string | null;
   place_traits_json: Record<string, unknown> | null;
 };
 

@@ -16,3 +16,7 @@ frontend/.next/
 
 # mac
 .DS_Store
+
+# editor backup files
+*~
+\#*\#
