@@ -66,18 +66,20 @@ export type RecommendationFeedbackType =
   | "too_touristy"
   | "too_expensive";
 
-type RequestOptions = RequestInit & {
-  body?: unknown;
+type JsonRequestOptions = Omit<RequestInit, "body" | "headers"> & {
+  headers?: HeadersInit;
+  json?: unknown;
 };
 
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+async function request<T>(path: string, options: JsonRequestOptions = {}): Promise<T> {
+  const { headers, json, ...requestInit } = options;
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
+    ...requestInit,
     headers: {
-      "Content-Type": "application/json",
-      ...(options.headers ?? {}),
+      ...(json === undefined ? {} : { "Content-Type": "application/json" }),
+      ...(headers ?? {}),
     },
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body: json === undefined ? undefined : JSON.stringify(json),
     cache: "no-store",
   });
 
@@ -106,7 +108,7 @@ export function getMe() {
 export function updateMe(payload: { home_city: string | null }) {
   return request<User>("/me", {
     method: "PATCH",
-    body: payload,
+    json: payload,
   });
 }
 
@@ -122,7 +124,7 @@ export function createSeed(payload: {
 }) {
   return request<SeedRestaurant>("/me/seeds", {
     method: "POST",
-    body: payload,
+    json: payload,
   });
 }
 
@@ -155,7 +157,7 @@ export function generateRecommendations(payload: {
 }) {
   return request<{ recommendations: Recommendation[] }>("/recommendations:generate", {
     method: "POST",
-    body: {
+    json: {
       location: {
         city: payload.location.city,
         ...(payload.location.lat == null ? {} : { lat: payload.location.lat }),
@@ -179,7 +181,7 @@ export function submitRecommendationFeedback(
 ) {
   return request<{ id: string }>(`/recommendations/${recommendationId}/feedback`, {
     method: "POST",
-    body: {
+    json: {
       feedback_type: feedbackType,
     },
   });
