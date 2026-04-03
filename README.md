@@ -100,8 +100,13 @@ Use these in local development or Railway:
 - `DEFAULT_USER_NAME`
 - `GOOGLE_PLACES_API_KEY`
 - `GOOGLE_PLACES_BASE_URL`
+- `GOOGLE_PLACES_TEXT_SEARCH_BASE_URL`
 - `GOOGLE_GEOCODING_BASE_URL`
 - `GOOGLE_PLACES_TIMEOUT_SECONDS`
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+- `OPENAI_BASE_URL`
+- `OPENAI_TIMEOUT_SECONDS`
 
 Notes:
 
@@ -206,5 +211,7 @@ pip install -r requirements-dev.txt
 
 - Authentication remains stubbed with a default demo user
 - Google Places is used when configured and available
+- Verified seed restaurants can optionally run a narrow AI extraction step for structured trait enrichment when `OPENAI_API_KEY` is configured
+- Seed restaurants can be verified against Google Places before saving, with a manual fallback when no match is selected
 - If Google data is unavailable or too weak, recommendations fall back to the internal mock catalog
 - Secrets should live in runtime environment variables only; do not commit `.env` files

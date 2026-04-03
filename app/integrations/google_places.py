@@ -5,6 +5,7 @@ from typing import Any
 import httpx
 
 from app.core.config import get_settings
+from app.services.restaurant_identity import infer_restaurant_identity
 
 
 logger = logging.getLogger(__name__)
@@ -291,6 +292,19 @@ def normalize_google_place(
     vibe_tags = _normalize_vibe_tags(place, relevance_score)
     raw_types = [str(item) for item in place.get("types", [])]
     country = requested_country or _country_from_address(address)
+    identity = infer_restaurant_identity(
+        name=str(place.get("name") or ""),
+        raw_types=raw_types,
+        cuisine_tags=cuisine_tags,
+        vibe_tags=vibe_tags,
+        food_style_tags=["strong_food_identity" if "strong food identity" in cuisine_tags else ""],
+        price_level=_price_level_to_symbol(place.get("price_level")),
+        formality_score=_formality_score(place, vibe_tags, cuisine_tags),
+        tourist_profile=_tourist_profile(place, relevance_score),
+        rating=float(place.get("rating") or 0) or None,
+        user_ratings_total=int(place.get("user_ratings_total") or 0),
+        text_blobs=[address],
+    )
 
     return {
         "restaurant_json": {
@@ -310,7 +324,127 @@ def normalize_google_place(
             "formality_score": _formality_score(place, vibe_tags, cuisine_tags),
             "tourist_profile": _tourist_profile(place, relevance_score),
             "google_place_id": place.get("place_id"),
+            "primary_archetype": identity["primary_archetype"],
+            "secondary_archetypes": identity["secondary_archetypes"],
+            "positive_traits": identity["positive_traits"],
+            "negative_traits": identity["negative_traits"],
+            "character_score": identity["character_score"],
+            "localness_score": identity["localness_score"],
+            "food_identity_score": identity["food_identity_score"],
         }
+    }
+
+
+def normalize_seed_place_candidate(
+    place: dict[str, Any],
+    *,
+    requested_city: str,
+) -> dict[str, Any]:
+    address = _extract_address(place)
+    lat, lon = _extract_coordinates(place)
+    raw_types = [str(item) for item in place.get("types", [])]
+    relevance_score = 1.4 if "restaurant" in raw_types else 1.0
+    cuisine_tags = _normalize_cuisine_tags(place)
+    vibe_tags = _normalize_vibe_tags(place, relevance_score)
+    rating = float(place.get("rating") or 0) or None
+    user_ratings_total = int(place.get("user_ratings_total") or 0) or None
+    price_level = _price_level_to_symbol(place.get("price_level"))
+    tourist_profile = _tourist_profile(place, relevance_score)
+    formality_score = _formality_score(place, vibe_tags, cuisine_tags)
+    identity = infer_restaurant_identity(
+        name=str(place.get("name") or ""),
+        raw_types=raw_types,
+        cuisine_tags=cuisine_tags,
+        vibe_tags=vibe_tags,
+        food_style_tags=[
+            value
+            for value in [
+                "strong_food_identity" if "strong food identity" in cuisine_tags else "",
+                "creative" if "creative" in cuisine_tags else "",
+            ]
+            if value
+        ],
+        price_level=price_level,
+        formality_score=formality_score,
+        tourist_profile=tourist_profile,
+        rating=rating,
+        user_ratings_total=user_ratings_total,
+        text_blobs=[address],
+    )
+    menu_summary_text = ", ".join(tag.replace("_", " ") for tag in cuisine_tags if tag != "restaurant") or None
+    review_summary_text = (
+        f"Rated {rating:.1f} from {user_ratings_total} reviews with a {'local-leaning' if tourist_profile == 'local-leaning' else tourist_profile} profile."
+        if rating is not None and user_ratings_total is not None
+        else None
+    )
+    editorial_summary_text = (
+        f"{' / '.join(vibe_tags[:3]).replace('-', ' ')} place with {' / '.join(cuisine_tags[:2]).replace('_', ' ')} cues."
+        if vibe_tags or cuisine_tags
+        else None
+    )
+    return {
+        "name": str(place.get("name") or "").strip() or f"{requested_city} Restaurant",
+        "city": requested_city,
+        "formatted_address": address or None,
+        "source": "google_places",
+        "source_place_id": str(place.get("place_id") or ""),
+        "lat": lat,
+        "lon": lon,
+        "price_level": price_level,
+        "rating": rating,
+        "user_ratings_total": user_ratings_total,
+        "raw_types": raw_types,
+        "review_summary_text": review_summary_text,
+        "editorial_summary_text": editorial_summary_text,
+        "menu_summary_text": menu_summary_text,
+        "raw_seed_note_text": None,
+        "raw_place_metadata_json": {
+            "name": place.get("name"),
+            "city": requested_city,
+            "formatted_address": address or None,
+            "price_level": price_level,
+            "rating": rating,
+            "user_ratings_total": user_ratings_total,
+            "raw_types": raw_types,
+        },
+        "raw_review_text": review_summary_text,
+        "derived_traits_json": {
+            "vibe": vibe_tags,
+            "formality": ["formal" if formality_score >= 0.68 else "casual" if formality_score <= 0.35 else "casual_polished"],
+            "food_style": [
+                value
+                for value in [
+                    "strong_food_identity" if "strong food identity" in cuisine_tags else None,
+                    "creative" if "creative" in cuisine_tags else None,
+                ]
+                if value is not None
+            ],
+            "social_feel": [tourist_profile.replace("-", "_")],
+            "use_case": ["groups"] if "shared-plates" in vibe_tags else ["everyday"],
+            "cuisine_style": [tag.replace("-", "_") for tag in cuisine_tags if tag != "restaurant"],
+            "primary_archetype": identity["primary_archetype"],
+            "secondary_archetypes": identity["secondary_archetypes"],
+            "positive_traits": identity["positive_traits"],
+            "negative_traits": identity["negative_traits"],
+            "confidence_score": identity["confidence_score"],
+        },
+        "ai_summary_text": None,
+        "place_traits_json": {
+            "vibe": vibe_tags,
+            "food_style": cuisine_tags,
+            "tourist_tolerance": [f"{tourist_profile} places"],
+            "price_band": price_level,
+            "likely_formality": "formal" if formality_score >= 0.68 else "casual" if formality_score <= 0.35 else "balanced",
+            "formality_score": formality_score,
+            "tourist_profile": tourist_profile,
+            "primary_archetype": identity["primary_archetype"],
+            "secondary_archetypes": identity["secondary_archetypes"],
+            "positive_traits": identity["positive_traits"],
+            "negative_traits": identity["negative_traits"],
+            "character_score": identity["character_score"],
+            "localness_score": identity["localness_score"],
+            "food_identity_score": identity["food_identity_score"],
+        },
     }
 
 
@@ -417,3 +551,63 @@ class GooglePlacesClient:
             len(deduped),
         )
         return deduped[:10]
+
+    def search_seed_places(
+        self,
+        *,
+        name: str,
+        city: str,
+    ) -> list[dict[str, Any]]:
+        if not self.settings.google_places_api_key:
+            logger.debug("Google seed search skipped city=%s has_key=%s", city, False)
+            return []
+
+        response = httpx.get(
+            self.settings.google_places_text_search_base_url,
+            params={
+                "key": self.settings.google_places_api_key,
+                "query": f"{name} {city}",
+                "type": "restaurant",
+            },
+            timeout=self.settings.google_places_timeout_seconds,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        if payload.get("status") not in {"OK", "ZERO_RESULTS"}:
+            raise RuntimeError(payload.get("error_message") or payload.get("status") or "Google Places seed search failed")
+
+        raw_results = payload.get("results", [])
+        candidates: list[dict[str, Any]] = []
+        for place in raw_results:
+            raw_types = {str(item) for item in place.get("types", [])}
+            if not place.get("name") or raw_types & IRRELEVANT_TYPES:
+                continue
+            if "restaurant" not in raw_types and "bar" not in raw_types and "cafe" not in raw_types:
+                continue
+            normalized = normalize_seed_place_candidate(place, requested_city=city)
+            if not normalized["source_place_id"]:
+                continue
+            candidates.append(normalized)
+
+        deduped: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for candidate in candidates:
+            key = " | ".join(
+                [
+                    _normalize_name_for_dedupe(candidate["name"]),
+                    _normalize_address_for_dedupe(candidate.get("formatted_address") or ""),
+                ]
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(candidate)
+
+        logger.debug(
+            "Google seed search city=%s query=%s raw=%s kept=%s",
+            city,
+            name,
+            len(raw_results),
+            len(deduped),
+        )
+        return deduped[:5]

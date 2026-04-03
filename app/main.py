@@ -29,6 +29,18 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+from sqlalchemy import inspect
+
+@app.on_event("startup")
+def on_startup():
+    Base.metadata.create_all(bind=engine)
+    inspector = inspect(engine)
+    print("DB URL:", engine.url)
+    print("TABLES:", inspector.get_table_names())
+    print("SEED COLUMNS:", [c["name"] for c in inspector.get_columns("seed_restaurants")])
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -39,3 +51,5 @@ app.add_middleware(
 
 
 app.include_router(api_router, prefix="/api/v1")
+
+

@@ -17,8 +17,51 @@ export type SeedRestaurant = {
   city: string;
   sentiment: "love" | "dislike";
   notes: string | null;
+  source: string | null;
+  source_place_id: string | null;
+  formatted_address: string | null;
+  lat: number | null;
+  lon: number | null;
+  price_level: string | null;
+  rating: number | null;
+  user_ratings_total: number | null;
+  raw_types: string[] | null;
+  review_summary_text: string | null;
+  editorial_summary_text: string | null;
+  menu_summary_text: string | null;
+  raw_seed_note_text: string | null;
+  raw_place_metadata_json: Record<string, unknown> | null;
+  raw_review_text: string | null;
+  derived_traits_json: Record<string, unknown> | null;
+  ai_summary_text: string | null;
+  enrichment_status: string | null;
+  enriched_at: string | null;
+  place_traits_json: Record<string, unknown> | null;
+  is_verified_place: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type SeedPlaceCandidate = {
+  name: string;
+  city: string;
+  formatted_address: string | null;
+  source: "google_places";
+  source_place_id: string;
+  lat: number | null;
+  lon: number | null;
+  price_level: string | null;
+  rating: number | null;
+  user_ratings_total: number | null;
+  raw_types: string[] | null;
+  review_summary_text: string | null;
+  editorial_summary_text: string | null;
+  menu_summary_text: string | null;
+  raw_seed_note_text: string | null;
+  raw_place_metadata_json: Record<string, unknown> | null;
+  raw_review_text: string | null;
+  derived_traits_json: Record<string, unknown> | null;
+  place_traits_json: Record<string, unknown> | null;
 };
 
 export type TasteProfile = {
@@ -116,11 +159,38 @@ export function getSeeds() {
   return request<SeedRestaurant[]>("/me/seeds");
 }
 
+export function searchSeedPlaces(params: { name: string; city: string }) {
+  const query = new URLSearchParams({
+    name: params.name,
+    city: params.city,
+  });
+  return request<SeedPlaceCandidate[]>(`/me/seeds/search?${query.toString()}`);
+}
+
 export function createSeed(payload: {
   name: string;
   city: string;
   sentiment: "love" | "dislike";
   notes: string;
+  source?: string | null;
+  source_place_id?: string | null;
+  formatted_address?: string | null;
+  lat?: number | null;
+  lon?: number | null;
+  price_level?: string | null;
+  rating?: number | null;
+  user_ratings_total?: number | null;
+  raw_types?: string[] | null;
+  review_summary_text?: string | null;
+  editorial_summary_text?: string | null;
+  menu_summary_text?: string | null;
+  raw_seed_note_text?: string | null;
+  raw_place_metadata_json?: Record<string, unknown> | null;
+  raw_review_text?: string | null;
+  derived_traits_json?: Record<string, unknown> | null;
+  ai_summary_text?: string | null;
+  place_traits_json?: Record<string, unknown> | null;
+  is_verified_place?: boolean;
 }) {
   return request<SeedRestaurant>("/me/seeds", {
     method: "POST",

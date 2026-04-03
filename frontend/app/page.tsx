@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import {
   Recommendation,
   RecommendationFeedbackType,
+  SeedPlaceCandidate,
   SeedRestaurant,
   TasteProfile,
   User,
@@ -14,6 +15,7 @@ import {
   generateTasteProfile,
   getMe,
   getSeeds,
+  searchSeedPlaces,
   submitRecommendationFeedback,
   updateMe,
 } from "../lib/api";
@@ -48,6 +50,30 @@ const feedbackOptions: Array<{
   { label: "Too expensive", value: "too_expensive" },
 ];
 
+function previewSeedTraits(seed: SeedRestaurant | SeedPlaceCandidate | null): string[] {
+  if (!seed || !seed.derived_traits_json || typeof seed.derived_traits_json !== "object") {
+    return [];
+  }
+
+  const traits = seed.derived_traits_json as Record<string, unknown>;
+  const preview: string[] = [];
+  for (const key of ["vibe", "food_style", "cuisine_style", "social_feel"]) {
+    const values = traits[key];
+    if (Array.isArray(values)) {
+      for (const value of values) {
+        const label = String(value).replace(/_/g, " ");
+        if (!preview.includes(label)) {
+          preview.push(label);
+        }
+        if (preview.length >= 4) {
+          return preview;
+        }
+      }
+    }
+  }
+  return preview;
+}
+
 function buildGoogleMapsUrl(recommendation: Recommendation): string {
   const restaurant = recommendation.restaurant_json;
   const placeId = typeof restaurant.google_place_id === "string" ? restaurant.google_place_id : null;
@@ -65,6 +91,26 @@ function buildGoogleMapsUrl(recommendation: Recommendation): string {
   ].filter(Boolean);
 
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(queryParts.join(", "))}`;
+}
+
+function formatSeedEnrichmentStatus(seed: SeedRestaurant): string {
+  if (!seed.is_verified_place) {
+    return "Manual entry • lower confidence";
+  }
+
+  if (seed.enrichment_status === "ai_completed") {
+    return "Verified place • AI-enriched";
+  }
+
+  if (seed.enrichment_status === "deterministic_only") {
+    return "Verified place • enriched";
+  }
+
+  if (seed.enrichment_status) {
+    return `Verified place • ${seed.enrichment_status}`;
+  }
+
+  return "Verified place";
 }
 
 function RecommendationCard({ recommendation }: { recommendation: Recommendation }) {
@@ -199,6 +245,10 @@ export default function Page() {
   const [seedsLoading, setSeedsLoading] = useState(true);
   const [seedSubmitting, setSeedSubmitting] = useState(false);
   const [deletingSeedId, setDeletingSeedId] = useState<string | null>(null);
+  const [seedSearchLoading, setSeedSearchLoading] = useState(false);
+  const [seedSearchPerformed, setSeedSearchPerformed] = useState(false);
+  const [seedCandidates, setSeedCandidates] = useState<SeedPlaceCandidate[]>([]);
+  const [selectedSeedCandidate, setSelectedSeedCandidate] = useState<SeedPlaceCandidate | null>(null);
   const [seedError, setSeedError] = useState<string | null>(null);
 
   const [tasteProfile, setTasteProfile] = useState<TasteProfile | null>(null);
@@ -209,6 +259,18 @@ export default function Page() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [recommendationLoading, setRecommendationLoading] = useState(false);
   const [recommendationError, setRecommendationError] = useState<string | null>(null);
+  const [fallbackWarning, setFallbackWarning] = useState<string | null>(null);
+
+  function handleSeedCandidateSelect(candidate: SeedPlaceCandidate) {
+    setSelectedSeedCandidate(candidate);
+    setSeedForm((current) => ({
+      ...current,
+      name: candidate.name,
+      city: candidate.city,
+    }));
+    setSeedCandidates([]);
+    setSeedSearchPerformed(false);
+  }
 
   async function refreshSeeds() {
     setSeedsLoading(true);
@@ -243,6 +305,49 @@ export default function Page() {
     void loadInitialData();
   }, []);
 
+  useEffect(() => {
+    const city = seedForm.city.trim();
+    const name = seedForm.name.trim();
+
+    if (!city || name.length < 2) {
+      setSeedSearchLoading(false);
+      setSeedSearchPerformed(false);
+      setSeedCandidates([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = window.setTimeout(() => {
+      async function loadSeedCandidates() {
+        try {
+          setSeedSearchLoading(true);
+          setSeedError(null);
+          setSeedSearchPerformed(true);
+          const candidates = await searchSeedPlaces({ name, city });
+          if (!cancelled) {
+            setSeedCandidates(candidates);
+          }
+        } catch (error) {
+          if (!cancelled) {
+            setSeedCandidates([]);
+            setSeedError(error instanceof Error ? error.message : "Failed to search places");
+          }
+        } finally {
+          if (!cancelled) {
+            setSeedSearchLoading(false);
+          }
+        }
+      }
+
+      void loadSeedCandidates();
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [seedForm.city, seedForm.name]);
+
   async function handleProfileSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
@@ -266,9 +371,31 @@ export default function Page() {
       await createSeed({
         ...seedForm,
         notes: seedForm.notes.trim(),
+        source: selectedSeedCandidate?.source ?? null,
+        source_place_id: selectedSeedCandidate?.source_place_id ?? null,
+        formatted_address: selectedSeedCandidate?.formatted_address ?? null,
+        lat: selectedSeedCandidate?.lat ?? null,
+        lon: selectedSeedCandidate?.lon ?? null,
+        price_level: selectedSeedCandidate?.price_level ?? null,
+        rating: selectedSeedCandidate?.rating ?? null,
+        user_ratings_total: selectedSeedCandidate?.user_ratings_total ?? null,
+        raw_types: selectedSeedCandidate?.raw_types ?? null,
+        review_summary_text: selectedSeedCandidate?.review_summary_text ?? null,
+        editorial_summary_text: selectedSeedCandidate?.editorial_summary_text ?? null,
+        menu_summary_text: selectedSeedCandidate?.menu_summary_text ?? null,
+        raw_seed_note_text: seedForm.notes.trim() || null,
+        raw_place_metadata_json: selectedSeedCandidate?.raw_place_metadata_json ?? null,
+        raw_review_text: selectedSeedCandidate?.raw_review_text ?? null,
+        derived_traits_json: selectedSeedCandidate?.derived_traits_json ?? null,
+        ai_summary_text: selectedSeedCandidate?.ai_summary_text ?? null,
+        place_traits_json: selectedSeedCandidate?.place_traits_json ?? null,
+        is_verified_place: selectedSeedCandidate !== null,
       });
       await refreshSeeds();
       setSeedForm(initialSeedForm);
+      setSeedCandidates([]);
+      setSelectedSeedCandidate(null);
+      setSeedSearchPerformed(false);
     } catch (error) {
       setSeedError(error instanceof Error ? error.message : "Failed to create seed restaurant");
     } finally {
@@ -307,6 +434,7 @@ export default function Page() {
     try {
       setRecommendationLoading(true);
       setRecommendationError(null);
+      setFallbackWarning(null);
       const response = await generateRecommendations({
         location: {
           city: recommendationForm.city.trim(),
@@ -321,8 +449,12 @@ export default function Page() {
         },
       });
       setRecommendations(response.recommendations);
+      if (response.recommendations.some((item) => item.restaurant_json.source === "fallback_mock")) {
+        setFallbackWarning("Google Places results were unavailable or insufficient, so fallback restaurant candidates are being shown.");
+      }
     } catch (error) {
       setRecommendationError(error instanceof Error ? error.message : "Failed to generate recommendations");
+      setFallbackWarning(null);
     } finally {
       setRecommendationLoading(false);
     }
@@ -334,11 +466,6 @@ export default function Page() {
         <div>
           <p className={styles.eyebrow}>Taste Travel MVP</p>
           <h1>Restaurant recommendations shaped by your travel taste profile.</h1>
-          <p className={styles.subtle}>
-            Single-page Next.js client for the local FastAPI backend running at
-            {" "}
-            <code>http://127.0.0.1:8000/api/v1</code>.
-          </p>
         </div>
       </section>
 
@@ -372,23 +499,72 @@ export default function Page() {
           <h2>Seed restaurants</h2>
           <form className={styles.form} onSubmit={handleSeedSubmit}>
             <label>
-              <span>Name</span>
-              <input
-                  value={seedForm.name}
-                  disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
-                  onChange={(event) => setSeedForm((current) => ({ ...current, name: event.target.value }))}
-                  required
-                />
-            </label>
-            <label>
               <span>City</span>
               <input
                   value={seedForm.city}
                   disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
-                  onChange={(event) => setSeedForm((current) => ({ ...current, city: event.target.value }))}
+                  onChange={(event) => {
+                    setSeedForm((current) => ({ ...current, city: event.target.value }));
+                    setSelectedSeedCandidate(null);
+                    setSeedCandidates([]);
+                    setSeedSearchPerformed(false);
+                  }}
                   required
                 />
             </label>
+            <label className={styles.autocompleteField}>
+              <span>Name</span>
+              <input
+                  value={seedForm.name}
+                  disabled={seedSubmitting || seedsLoading || deletingSeedId !== null}
+                  onChange={(event) => {
+                    setSeedForm((current) => ({ ...current, name: event.target.value }));
+                    setSelectedSeedCandidate(null);
+                    setSeedCandidates([]);
+                    setSeedSearchPerformed(false);
+                  }}
+                  required
+                />
+              {seedCandidates.length > 0 ? (
+                <div className={styles.candidateDropdown}>
+                  {seedCandidates.map((candidate) => (
+                    <button
+                      key={candidate.source_place_id}
+                      type="button"
+                      className={`${styles.candidateButton} ${
+                        selectedSeedCandidate?.source_place_id === candidate.source_place_id ? styles.candidateButtonSelected : ""
+                      }`}
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => handleSeedCandidateSelect(candidate)}
+                      disabled={seedSubmitting}
+                    >
+                      <strong>{candidate.name}</strong>
+                      <span>{candidate.formatted_address || candidate.city}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </label>
+            {selectedSeedCandidate ? (
+              <div className={styles.seedHintBlock}>
+                <p className={styles.feedbackSaved}>
+                  Verified place selected: {selectedSeedCandidate.name}
+                </p>
+                {previewSeedTraits(selectedSeedCandidate).length ? (
+                  <p className={styles.subtle}>
+                    Trait preview: {previewSeedTraits(selectedSeedCandidate).join(", ")}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <p className={styles.subtle}>
+                Enter the city first, then type the restaurant name. Selecting a verified place gives stronger taste signals even if notes are brief.
+              </p>
+            )}
+            {seedSearchLoading ? <p className={styles.subtle}>Searching places…</p> : null}
+            {seedSearchPerformed && !seedSearchLoading && seedCandidates.length === 0 ? (
+              <p className={styles.subtle}>No strong Google Places matches found. You can still save manually.</p>
+            ) : null}
             <label>
               <span>Sentiment</span>
               <select
@@ -440,6 +616,12 @@ export default function Page() {
                   </button>
                 </div>
                 <p>{seed.city}</p>
+                <p className={styles.subtle}>{formatSeedEnrichmentStatus(seed)}</p>
+                {seed.formatted_address ? <p className={styles.subtle}>{seed.formatted_address}</p> : null}
+                {previewSeedTraits(seed).length ? (
+                  <p className={styles.subtle}>Traits: {previewSeedTraits(seed).join(", ")}</p>
+                ) : null}
+                {seed.ai_summary_text ? <p className={styles.subtle}>{seed.ai_summary_text}</p> : null}
                 <p className={styles.subtle}>{seed.notes || "No notes"}</p>
               </div>
             ))}
@@ -594,6 +776,7 @@ export default function Page() {
           </form>
 
           {recommendationError ? <p className={styles.error}>{recommendationError}</p> : null}
+          {fallbackWarning ? <p className={styles.fallbackWarning}>{fallbackWarning}</p> : null}
           <div className={styles.recommendationList}>
             {recommendations.map((recommendation) => (
               <RecommendationCard key={recommendation.id} recommendation={recommendation} />

@@ -76,10 +76,19 @@
   width: fit-content;
   min-width: 140px;
   padding: 12px 16px;
-  border: 0;
-  border-radius: 999px;
-  background: #2e5d50;
+  border: 1px solid #2f261d;
+  border-radius: 10px;
+  background: #2f261d;
   color: #fff;
+  font-weight: 600;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+.form button:hover,
+.card > button:hover {
+  background: #433528;
+  border-color: #433528;
+  transform: translateY(-1px);
 }
 
 .form button:disabled,
@@ -108,11 +117,12 @@
 }
 
 .badge {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #efe3cf;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: #f4eadb;
   color: #5c4830;
   font-size: 0.78rem;
+  border: 1px solid rgba(63, 47, 31, 0.08);
 }
 
 .seedHeader {
@@ -125,9 +135,9 @@
 .deleteButton {
   min-width: 92px;
   padding: 8px 12px;
-  border: 1px solid rgba(161, 39, 39, 0.18);
-  border-radius: 999px;
-  background: #fff;
+  border: 1px solid rgba(121, 44, 44, 0.2);
+  border-radius: 10px;
+  background: #fff8f7;
   color: #8d2222;
 }
 
@@ -137,6 +147,64 @@
 
 .error {
   color: #a12727;
+}
+
+.fallbackWarning {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(161, 39, 39, 0.26);
+  background: #fff0ef;
+  color: #8d2222;
+  font-weight: 600;
+  animation: fallbackPulse 1.2s ease-in-out 2;
+}
+
+.autocompleteField {
+  position: relative;
+}
+
+.candidateDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: 14px;
+  background: #fffaf2;
+  border: 1px solid rgba(63, 47, 31, 0.12);
+  box-shadow: 0 18px 35px rgba(63, 47, 31, 0.12);
+}
+
+.candidateButton {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid rgba(63, 47, 31, 0.1);
+  border-radius: 12px;
+  background: #fff;
+  color: #3f2f1f;
+  text-align: left;
+}
+
+.candidateButton span {
+  color: #685b4d;
+  font-size: 0.88rem;
+}
+
+.candidateButtonSelected {
+  border-color: rgba(63, 47, 31, 0.24);
+  background: #f4ede3;
+}
+
+.seedHintBlock {
+  display: grid;
+  gap: 4px;
 }
 
 .recommendationList {
@@ -182,10 +250,11 @@
 
 .pricePill {
   padding: 5px 10px;
-  border-radius: 999px;
-  background: #e3efe9;
-  color: #214b40;
+  border-radius: 8px;
+  background: #efe7da;
+  color: #3f2f1f;
   font-weight: 700;
+  border: 1px solid rgba(63, 47, 31, 0.08);
 }
 
 .detailGroup {
@@ -210,10 +279,11 @@
 
 .tag {
   padding: 5px 10px;
-  border-radius: 999px;
-  background: #f1e7d8;
+  border-radius: 8px;
+  background: #f6efe4;
   color: #5d4a35;
   font-size: 0.84rem;
+  border: 1px solid rgba(63, 47, 31, 0.08);
 }
 
 .whyBlock {
@@ -246,7 +316,7 @@
 }
 
 .score {
-  color: #2e5d50;
+  color: #57463a;
   font-weight: 700;
 }
 
@@ -267,10 +337,16 @@
 .feedbackButton {
   padding: 8px 12px;
   border: 1px solid rgba(63, 47, 31, 0.12);
-  border-radius: 999px;
-  background: #fff;
+  border-radius: 10px;
+  background: #fffaf4;
   color: #4f4132;
   font-size: 0.84rem;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.feedbackButton:hover {
+  background: #f4ede3;
+  border-color: rgba(63, 47, 31, 0.22);
 }
 
 .feedbackButton:disabled {
@@ -279,8 +355,21 @@
 
 .feedbackSaved {
   margin: 0;
-  color: #2e5d50;
+  color: #6f5a45;
   font-size: 0.88rem;
+}
+
+@keyframes fallbackPulse {
+  0%,
+  100% {
+    background: #fff0ef;
+    border-color: rgba(161, 39, 39, 0.26);
+  }
+
+  50% {
+    background: #ffdedd;
+    border-color: rgba(161, 39, 39, 0.45);
+  }
 }
 
 @media (max-width: 640px) {

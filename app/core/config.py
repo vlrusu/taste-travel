@@ -27,11 +27,19 @@ class Settings(BaseSettings):
         default="https://maps.googleapis.com/maps/api/place/nearbysearch/json",
         alias="GOOGLE_PLACES_BASE_URL",
     )
+    google_places_text_search_base_url: str = Field(
+        default="https://maps.googleapis.com/maps/api/place/textsearch/json",
+        alias="GOOGLE_PLACES_TEXT_SEARCH_BASE_URL",
+    )
     google_geocoding_base_url: str = Field(
         default="https://maps.googleapis.com/maps/api/geocode/json",
         alias="GOOGLE_GEOCODING_BASE_URL",
     )
     google_places_timeout_seconds: float = Field(default=8.0, alias="GOOGLE_PLACES_TIMEOUT_SECONDS")
+    openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
+    openai_model: str = Field(default="gpt-5-mini", alias="OPENAI_MODEL")
+    openai_base_url: str = Field(default="https://api.openai.com/v1", alias="OPENAI_BASE_URL")
+    openai_timeout_seconds: float = Field(default=15.0, alias="OPENAI_TIMEOUT_SECONDS")
     backend_cors_origins: str = Field(
         default="http://localhost:3000,http://127.0.0.1:3000",
         alias="BACKEND_CORS_ORIGINS",

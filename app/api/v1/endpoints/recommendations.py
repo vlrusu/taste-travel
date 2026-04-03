@@ -31,6 +31,7 @@ def generate_recommendation(
     service = RecommendationService(
         recommendation_repository=RecommendationRepository(db),
         taste_profile_repository=TasteProfileRepository(db),
+        feedback_repository=FeedbackRepository(db),
     )
     recommendations = service.generate_for_user(
         user=current_user,

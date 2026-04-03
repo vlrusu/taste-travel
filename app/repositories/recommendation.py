@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.models.feedback import Feedback
@@ -59,3 +59,13 @@ class FeedbackRepository:
         self.db.flush()
         self.db.refresh(feedback)
         return feedback
+
+    def list_recent_for_user(self, *, user_id: UUID, limit: int = 12) -> list[tuple[Feedback, Recommendation]]:
+        rows = self.db.execute(
+            select(Feedback, Recommendation)
+            .join(Recommendation, Feedback.recommendation_id == Recommendation.id)
+            .where(Feedback.user_id == user_id)
+            .order_by(desc(Feedback.created_at))
+            .limit(limit)
+        )
+        return [(feedback, recommendation) for feedback, recommendation in rows.all()]

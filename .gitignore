@@ -9,3 +9,10 @@ __pycache__/
 test.db
 frontend/node_modules/
 frontend/.next/
+
+# database
+*.db
+*.sqlite
+
+# mac
+.DS_Store

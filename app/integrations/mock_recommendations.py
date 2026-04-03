@@ -72,4 +72,56 @@ def build_mock_recommendation_candidates(
                 "tourist_profile": "mixed",
             }
         },
+        {
+            "restaurant_json": {
+                "name": f"{destination_city} Corner Kitchen",
+                "city": destination_city,
+                "country": destination_country,
+                "source": "fallback_mock",
+                "price_level": "$$",
+                "cuisine_tags": ["regional", "comfort_food", "strong food identity"],
+                "vibe_tags": ["warm", "casual", "local-favorite", "grounded"],
+                "formality_score": 0.18,
+                "tourist_profile": "local-leaning",
+            }
+        },
+        {
+            "restaurant_json": {
+                "name": f"{destination_city} Wine Lane",
+                "city": destination_city,
+                "country": destination_country,
+                "source": "fallback_mock",
+                "price_level": "$$",
+                "cuisine_tags": ["small-plates", "wine-bar", "creative"],
+                "vibe_tags": ["stylish", "lively", "casual"],
+                "formality_score": 0.35,
+                "tourist_profile": "mixed",
+            }
+        },
+        {
+            "restaurant_json": {
+                "name": f"{destination_city} Harbor Plates",
+                "city": destination_city,
+                "country": destination_country,
+                "source": "fallback_mock",
+                "price_level": "$$$",
+                "cuisine_tags": ["seafood", "regional", "strong food identity"],
+                "vibe_tags": ["buzzy", "warm", "shared-plates"],
+                "formality_score": 0.4,
+                "tourist_profile": "mixed",
+            }
+        },
+        {
+            "restaurant_json": {
+                "name": f"{destination_city} Night Counter",
+                "city": destination_city,
+                "country": destination_country,
+                "source": "fallback_mock",
+                "price_level": "$",
+                "cuisine_tags": ["street-food", "regional", "casual"],
+                "vibe_tags": ["energetic", "casual", "local-favorite"],
+                "formality_score": 0.08,
+                "tourist_profile": "local-leaning",
+            }
+        },
     ]
